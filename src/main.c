@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.8 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: main.c,v 1.9 2004/01/27 00:04:57 chris2511 Exp $ 
  *
  */                           
 
@@ -49,27 +49,27 @@ int preserve_uidgid = 0;
 inodb_t *ino_db = NULL;
 
 static void usage(char *name) {
-	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size] [-v] [-c]\n\n"
-			"-f  formatted ext2 filesystem image\n"
-			"-d  root directory to create\n"
+	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size] [-v] [-n]\n\n"
+			"-f  filesystem image file\n"
+			"-d  root directory to be copied to the image\n"
 			"-u  uid to use instead of the real one\n"
 			"-g  gid to use instead of the real one\n"
 			"-v  be verbose\n"
 			"-s  size of the filesystem\n"
-			"-c  create the filesystem\n", name);
+			"-n  do not create the filesystem, use an existing one\n", name);
 	exit(0);
 }
 
 int main(int argc, char *argv[] )
 {
-	int ret = 0, c, create=0, ksize=16384;
+	int ret = 0, c, create=1, ksize=4096;
 	ext2_filsys fs;
 	char *e2fsfile = NULL, *rootdir = NULL;
 	
 	init_ext2_err_tbl();
 	
 	do {
-		c = getopt(argc, argv, "vchf:d:u:g:s:");
+		c = getopt(argc, argv, "vnhf:d:u:g:s:");
 		switch (c) {
 			case 'v': verbose = 1; break;
 			case 'p': preserve_uidgid = 1; break;
@@ -78,7 +78,7 @@ int main(int argc, char *argv[] )
 			case 'f': e2fsfile = optarg; break;
 			case 'd': rootdir = optarg; break;
 			case 'h': usage(argv[0]); break;
-			case 'c': create = 1; break;
+			case 'n': create = 0; break;
 			case 's': ksize = atoi(optarg); break;
 		}
 			 

@@ -1,44 +1,55 @@
-.TH e2fsimage 3 "14 January 2004" "_VERSION_" 
+.TH e2fsimage 1 "14 January 2004" "_VERSION_" 
 .SH NAME
 e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .SH SYNOPSIS
 .B e2fsimage
 [
-.I -f fsimage
+.I -f imgfile
 ] [
 .I -d rootdir
 ] [
-.I -u UID
+.I -u uid
 ] [
-.I -g GID
+.I -g gid
+] [
+.I -s size
 ] [
 .I -v
 ] [
-.I -c
-] [
-.I -s
+.I -n
 ]
 .SH DESCRIPTION
 .LP
-Create an ext2 filesystem by copying the files from an existing directory
-structure. Supported filetypes are: regular files, directorys, hard-links
-and soft-links. Special files like block and character devices are not 
+.B e2fsimage
+creates an ext2 filesystem by recursively copying the files from 
+an existing directory structure.
+Supported filetypes are: regular files, directorys, hard-links
+and soft-links. 
+.br
+Special files like block and character devices are not 
 supported (yet).
 
 .LP
 The usual way to create ext2 filesystem images for initial ramdisks,
 boot-floppys or bootable CDs is to create an image with eg. 
-"dd if=/dev/zero of=e2image bs=1024 count=4096" then this image
-will be formatted with: "mke2fs -F e2image".
-Now this fill must be loopback-mounted by 
-.B root
-and all files must be copied and created in this fs as root
+.LP
+.TS
+tab (@);
+l l.
+1@ dd if=/dev/zero of=e2img bs=1024 count=4096
+2@ mke2fs -F e2img
+3@ mount -o loop e2img mounpoint
+.TE
+.LP
+At least the last command must be executed as root.
+All files must be copied and created in this filesystem image as root
+that shall belong to an other user than root
 in order to set the different owners (usually root) and to create
 the special files.
 Since all this results in a file that may belong to a
 ordinary user, this file can be created and filled with the fs
 structure by her. This application manages to
-+create such an image as ordinary user w/o 
+create such an image as ordinary user w/o 
 .I sudo
 or 
 .I suid root
@@ -55,3 +66,68 @@ including all hidden files. Hard links are resolved to result in hard links in t
 if the image is used as root filesystem or to "->file if used elsewhere
 but not to "->/home/user/build/rootdir/file".
 
+.SH OPTIONS
+
+.TP
+.BI \-d\  rootdir
+The content of the filesystemimage as a rekursive copy of 
+.I rootdir
+. All files are copied while preserving all attributes but the uid/gid.
+They will usually be set to 
+.I root.root
+This can be overwritten with the 
+.B -u 
+and 
+.B -g
+option respectively
+
+.TP
+.BI \-f\  imgfile
+This is the target file for the filesystem image. An existing file will be overwritten as long as 
+.B \-n
+is not given. The filesystem will be 
+.I size
+kilo bytes large.
+
+.TP
+.BI \-g\  gid
+Change the default group-id from 0 to
+.I gid
+Until now there is only 1 gid for all files supported.
+
+.TP
+.BI \-n
+This option allows to reuse an existing filesystem image defined by
+.B \-f
+The existing content is not modified by any means but there
+may not exist a file with the same name as a newly created one.
+
+.TP
+.BI \-s\  size
+When the filesystem is created the size will be 4096 Kbytes or
+.I size
+Kbytes if this parameter is added.
+
+.TP
+.BI \-u\  uid
+Change the default user-id from 0 to
+.I uid
+Until now there is only 1 uid for all files supported.
+
+.TP
+.BI \-v
+Be more verbose.
+
+.SH BUGS
+.LP
+I'm shure there are still enough bugs and enhancement possibilitys
+since this is an alpha version.
+
+.SH SEE ALSO
+.B mkcramfs(8) mke2fs(8)
+
+.SH AUTHOR
+.LP
+This program was written by Christian Hohnstaedt (christian@hohnstaedt.de).
+.br
+The project homepage is http://www.hohnstaedt.de/e2fsimage
