@@ -129,6 +129,7 @@ STRIP=${STRIP:=strip}
 
 prefix=${prefix}
 basedir=${basedir}
+mandir=${mandir:=man}
 VERSION=${version}
 
 EOF
