@@ -35,12 +35,13 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.21 2004/03/15 19:24:44 chris2511 Exp $ 
+ * $Id: main.c,v 1.22 2004/03/23 13:24:31 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
 #include <unistd.h>
+#include <string.h>
 
 
 static void usage(char *name)
@@ -55,7 +56,10 @@ static void usage(char *name)
 			"-s  size of the filesystem\n"
 			"-D  device filename\n"
 			"-p  preserve uid and gid\n"
-			"-n  do not create the filesystem, use an existing one\n\n",
+			"-n  do not create the filesystem, use an existing one\n"
+			"-D  change name of the file .DEVICES\n"
+			"-P  filename of the passwd file\n"
+			"-U  change name of the file .UIDGID file\n\n",
 			name);
 }
 
@@ -63,8 +67,10 @@ int main(int argc, char *argv[] )
 {
 	int ret = 0, c, create=1, ksize=4096;
 	char *e2fsfile = NULL;
+	char passwd_file[80];
 	e2i_ctx_t e2c;
 	struct cnt_t cnt;
+	uiddb_t passwd;
 	
 	/* initialize ext2fs error table */
 	init_ext2_err_tbl();
@@ -74,6 +80,7 @@ int main(int argc, char *argv[] )
 	
 	e2c.dev_file = ".DEVICES";
 	e2c.uid_file = ".UIDGID";
+
 	e2c.curr_path = NULL;
 	e2c.cnt = &cnt;
 	cnt.dir = cnt.regf = cnt.softln = cnt.hardln = cnt.specf = 0; 
@@ -95,6 +102,7 @@ int main(int argc, char *argv[] )
 			case 's': ksize = atoi(optarg); break;
 			case 'D': e2c.dev_file = optarg; break;
 			case 'U': e2c.uid_file = optarg; break;
+			case 'P': e2c.pw_file = optarg; break;
 		}
 			 
 	} while (c >= 0);
@@ -104,7 +112,12 @@ int main(int argc, char *argv[] )
 		usage(argv[0]);
 		return -1;
 	}
-	
+	/* Setup passwd file */
+	if (e2c.pw_file == NULL) {
+		strncpy(passwd_file, e2c.curr_path, 69);
+		strcat(passwd_file, "/etc/passwd");
+		e2c.pw_file = &passwd_file;
+	}
 	/* call mke2fs to create the initial filesystem */
 	if (create) {
 		ret = mke2fs(e2fsfile, ksize);
@@ -115,6 +128,10 @@ int main(int argc, char *argv[] )
 	e2c.ino_db = inodb_init();
 	if (e2c.ino_db == 0) return -1;
 
+	e2c.passwd = &passwd;
+	uiddb_init(e2c.passwd);
+	read_passwd(&e2c); 
+	
 	/* sanity check */
 	if(! (e2c.curr_path && e2fsfile)) usage (argv[0]);
 	

@@ -9,6 +9,7 @@ e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .RI [ -g\ gid ]
 .RI [ -D\ file ]
 .RI [ -U\ file ]
+.RI [ -P\ file ]
 .RI [ -p ]
 .RI [ -v ]
 .RI [ -n ]
@@ -80,10 +81,17 @@ The default filename is
 .TP
 .BI \-U\  uidgidfile
 The uidgidfile contains the uids and gids different from 0, see
-.IR UIDs and GIDs .
+.IR USERS .
 .br
 The default filename is 
 .BR .UIDGID .
+
+.TP
+.BI \-P\  passwd
+The password file in this parameter is used to convert user names to uids and gids.
+It tries to use the default in 
+.IR rootdir /etc/passwd,
+if it is omitted, 
 
 .TP
 .BI \-f\  imgfile
@@ -118,7 +126,7 @@ Kbytes large. The default is 4096 kilo bytes.
 .TP
 .BI \-u\  uid
 Change the default user-id from 0 to
-.I uid
+.IR uid .
 Until now there is only 1 uid for all files supported.
 
 .TP
@@ -174,9 +182,9 @@ would result in a line in
 .B dev/.DEVICES 
 as "ttyS1 c 4 65 0600"
 
-.SH UIDs and GIDs
+.SH USERS
 .LP
-Every directory may contain a file named .UIDGID the name can be changed
+Every directory may contain a file named .UIDGID and can be changed
 by the 
 .I -U
 option. The format of this file is:
@@ -184,24 +192,38 @@ option. The format of this file is:
 .I <name> <uid> 
 .RI [ \ <gid> \ ]
 .LP
-If the <name> is "." then the owner and group information
+.I <name> <username> 
+.LP
+If <name> is ".", then the owner and group information
 will be kept recursively for all files and directorys below.
-For a "chown 500 /home/user" you would write "user 500" to "home/.UIDGID and have
-such a directory "home/user" of course. A "chown -R 500 /home/user" one would write
-a ". 500" to "home/user/.UIDGID".
+For a "chown 500 /home/user" one would write "user 500" to "home/.UIDGID and have
+such a directory "home/user" of course. For a "chown -R 500 /home/user"
+one would write a ". 500" to "home/user/.UIDGID".
+Userid information given in .UIDGID overrides user info in .DEVICES. 
+.LP
+If the uid entry is not numeric it will be resolved by using
+.IR passwd ,
+provided by the option
+.IR \-P .
+In this case the gid is also taken from 
+.IR passwd .
+
 .TP
 .B name
 is the name of the file.
 .TP
 .B uid 
-is the numeric userid of the file. Usernames are not supported.
+is the numeric userid of the file.
 .TP
 .B gid 
-is the numeric groupid of the file. It will be zero if omitted. Groupnames are not supported, yet.
+is the numeric groupid of the file. It will be zero if omitted.
+.TP
+.B username 
+is the user name of the file owner, resolved by 
+.IR passwd .
 .SH BUGS
 .LP
-I'm shure there are still enough bugs and enhancement possibilitys
-since this is an alpha version.
+Bugs ?
 
 .SH SEE ALSO
 .BR mke2fs( 8 )

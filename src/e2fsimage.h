@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.17 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.18 2004/03/23 13:24:31 chris2511 Exp $ 
  *
  */                           
 
@@ -93,12 +93,14 @@ typedef struct {
 
     inodb_t *ino_db;
 	uiddb_t *uid_db;
+	uiddb_t *passwd;
     int default_uid;
     int default_gid;
     int verbose;
     int preserve_uidgid;
     const char *dev_file;
     const char *uid_file;
+    const char *pw_file;
 	struct cnt_t *cnt;
 } e2i_ctx_t;
 
@@ -135,4 +137,5 @@ void uiddb_free(uiddb_t *db);
 int read_uids(e2i_ctx_t *e2c, uiddb_t *db);
 int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino);
 
+int read_passwd(e2i_ctx_t *e2c);
 #endif

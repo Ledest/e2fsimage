@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.18 2004/03/15 19:24:43 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.19 2004/03/23 13:24:31 chris2511 Exp $ 
  *
  */                           
 
@@ -80,7 +80,10 @@ int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 
 	/* setup the uid database */
 	uiddb_init(&uiddb);
-	read_uids(&e2c, &uiddb);
+	if (read_uids(&e2c, &uiddb)) {
+		uiddb_free(e2c.uid_db);	
+		return -1;
+	}
 	e2c.uid_db = &uiddb;
 
 	/* check for . entry in .UIDGID */

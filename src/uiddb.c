@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uiddb.c,v 1.3 2004/03/15 21:11:48 chris2511 Exp $ 
+ * $Id: uiddb.c,v 1.4 2004/03/23 13:24:31 chris2511 Exp $ 
  *
  */                           
 
@@ -75,7 +75,10 @@ int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 	 * the needed size of the whole thing:
 	 * the structure + the length of the filename
 	 */
-	namelen = strnlen(name, 79) * sizeof(char);
+	namelen = strlen(name) * sizeof(char);
+	if (namelen > 79) {
+		fprintf(stderr, "name too long (>79) :  '%s'\n", name);
+	}
 	needed_size = sizeof(struct uidentry) + namelen;
 	/* 
 	 * first look if the available place is sufficent
@@ -93,6 +96,8 @@ int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 		db->first = ptr;
 	}
 	
+	//printf("UID db Added: %s, %d, %d\n",name, uid, gid);
+
 	/* make the new one sit at the end of the chain */
 	new = (struct uidentry *)(((unsigned char *)db->first) + db->size);
 	new->uid = uid;
@@ -125,11 +130,10 @@ int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid)
 	   	ptr = (struct uidentry *)((unsigned char *)(ptr+1) + ptr->namelen) )
    	{
 		/* fast check for the sake of speed */
-		if (ptr->namelen != strnlen(name, 79) ) continue;
+		if (ptr->namelen != strlen(name) ) continue;
 		if (memcmp(name, ptr+1, ptr->namelen) == 0) {
 			*uid = ptr->uid;
 			*gid = ptr->gid;
-			printf("FOUND %s\n", name);
 			return 1;
 		}
 	}

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.13 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.14 2004/03/23 13:24:31 chris2511 Exp $ 
  *
  */                           
 
@@ -152,7 +152,8 @@ int read_special_file(e2i_ctx_t *e2c)
 			continue;
 		}
 		
-		s.st_uid = s.st_gid = 0;
+		s.st_uid = e2c->default_uid;
+		s.st_gid = e2c->default_gid;
 		s.st_mode = 0600;
 		
 		n = sscanf(line_buf, "%79s %c %d %d %o %d %d",
