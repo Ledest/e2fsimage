@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.18 2004/01/29 12:42:49 chris2511 Exp $ 
+ * $Id: main.c,v 1.19 2004/02/21 16:57:09 chris2511 Exp $ 
  *
  */                           
 
@@ -57,7 +57,6 @@ static void usage(char *name)
 			"-p  preserve uid and gid\n"
 			"-n  do not create the filesystem, use an existing one\n\n",
 			name);
-	exit(0);
 }
 
 int main(int argc, char *argv[] )
@@ -73,7 +72,7 @@ int main(int argc, char *argv[] )
 	memset(&e2c, 0, sizeof(e2c));
 	
 	e2c.dev_file = ".DEVICES";
-	e2c.curr_path = ".";
+	e2c.curr_path = NULL;
 	
 	printf("%s - Version: %s\n",  argv[0], VER);
 	
@@ -87,13 +86,19 @@ int main(int argc, char *argv[] )
 			case 'g': e2c.default_gid = atoi(optarg); break;
 			case 'f': e2fsfile = optarg; break;
 			case 'd': e2c.curr_path = optarg; break;
-			case 'h': usage(argv[0]); break;
+			case 'h': usage(argv[0]); return 0;
 			case 'n': create = 0; break;
 			case 's': ksize = atoi(optarg); break;
 			case 'D': e2c.dev_file = optarg; break;
 		}
 			 
 	} while (c >= 0);
+	
+	/* sanity check */
+	if (e2fsfile == NULL || e2c.curr_path == NULL) {
+		usage(argv[0]);
+		return -1;
+	}
 	
 	/* call mke2fs to create the initial filesystem */
 	if (create) {

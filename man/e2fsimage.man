@@ -3,43 +3,29 @@
 e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .SH SYNOPSIS
 .B e2fsimage
-[
-.I -f imgfile
-] [
-.I -d rootdir
-] [
-.I -u uid
-] [
-.I -g gid
-] [
-.I -s size
-] [
-.I -D file
-] [
-.I -p
-] [
-.I -v
-] [
-.I -n
-]
+.RI [ -f\ imgfile ]
+.RI [ -d\ rootdir ]
+.RI [ -u\ uid ]
+.RI [ -g\ gid ]
+.RI [ -D\ file ]
+.RI [ -p ]
+.RI [ -v ]
+.RI [ -n ]
+.RI [ -s\ size ]
 .SH DESCRIPTION
 .LP
 .B e2fsimage
-creates an ext2 filesystem by recursively copying the files from 
+creates an ext2 filesystem image by recursively copying the files from 
 the existing directory structure
 .I rootdir
-.
+to the image-file.
+
 .br
-Supported filetypes are: regular files, directorys, hard-links
-, soft-links, block special devices, character special devices,
-fifos and of course hidden files.
+Supported filetypes are: regular files, directorys, hard-links,
+soft-links, block special devices, character special devices
+and fifos.
 Hard links are resolved to result in hard links in the image.
-Softlinks are copied as they are and not resolved or altered. In the 
-.I rootdir
-/home/user/build/rootdir a link to the file "file" should link to "->/file"
-if the image is used as root filesystem or to "->file if used elsewhere
-but not to "->/home/user/build/rootdir/file" since this
-will most likely result into a broken link.
+The content (target) of softlinks is copied \*(lq as-is \*(rq and will not be resolved or altered in any way.
 
 .LP
 The usual way to create ext2 filesystem images for initial ramdisks,
@@ -54,77 +40,71 @@ l l.
 4@ cp -r rootdir/* mountpoint
 .TE
 .LP
-At least the last command must be executed as root.
+At least the last 2 commands must be executed as root.
 In order to set the different ownerships (usually root) and to create
 the special device files root permissions are also needed.
 .LP
 Since all this results in a file that may belong to an 
-ordinary user, this file can be created and filled with the fs
-structure by her. This application manages to
-create such an image as ordinary user without
-.I sudo
-or 
-.I suid root
-bit set. 
+ordinary user, this file can be created and filled with the filesystem
+structure by her. This application manages to create such an
+image as ordinary user without sudo or suid-root bit set. 
 Of course suid-root programs in the filesystem image are possible 
 by making them suid-user.
 When this files are copied, the user is set to root and there you
 have your suid-root program.  
+.br
+It is also not mandatory to have the rootdir on an ext2 filesystem.
 
 .SH OPTIONS
 
 .TP
 .BI \-d\  rootdir
-The content of the filesystemimage as a recursive copy of 
-.I rootdir
-. All files are copied while preserving all attributes but the uid/gid.
+The content of the filesystemimage is a recursive copy of 
+.IR rootdir . 
+All files are copied while preserving all attributes but the uid/gid.
 They will usually be set to 
-.I root.root
+.IR root.root .
 This can be overwritten with the 
-.B -u 
-and 
-.B -g
-option respectively
+.BR -u \ and\  -g
+options respectively
 
 .TP
 .BI \-D\  devicefile
 The devicefile does contain all special devices to be created, see
-.I DEVICES
+.IR DEVICES .
 .br
 The default filename is 
-.B .DEVICES
+.BR .DEVICES .
 
 .TP
 .BI \-f\  imgfile
 This is the target file for the filesystem image. An existing file will be overwritten as long as 
 .B \-n
-is not given. The filesystem will be 
-.I size
-kilo bytes large.
+is not given.
 
 .TP
 .BI \-g\  gid
-Change the default group-id from 0 to
-.I gid
+Change the default group id from 0 to
+.IR gid .
 Until now there is only 1 gid for all files supported.
 
 .TP
-.BI \-n
+.B \-n
 This option allows to reuse an existing filesystem image defined by
 .B \-f
 The existing content is not modified by any means but there
 may not exist a file with the same name as a newly created one.
 
 .TP
-.BI \-p
+.B \-p
 Preserve original file owner. If this option is omitted all files in the 
-image will belong to root.
+image will belong to root. (This is usually what you want)
 
 .TP
 .BI \-s\  size
-When the filesystem is created the size will be 4096 Kbytes or
+When the filesystem is created the size will be
 .I size
-Kbytes if this parameter is added.
+Kbytes large. The default is 4096 kilo bytes.
 
 .TP
 .BI \-u\  uid
@@ -150,11 +130,11 @@ can be placed in every directory (usually
 .LP
 .I <name> <type> <major> <minor> <mode>
 .TP
-.BI name
+.B name
 the name of the file like 
 .I ttyS0
 .TP
-.BI type 
+.B type 
 Actually supported are
 .I c,\ u
 for character special devices,
@@ -163,10 +143,10 @@ for block special devices and
 .I p,\ f
 for fifos.
 .TP
-.BI major\ minor 
+.BR major\ minor .
 This are the major and minor numbers of the device
 .TP
-.BI mode
+.B mode
 The access mode for the file like 0644
 .LP
 A call to mknod like 
@@ -181,7 +161,7 @@ I'm shure there are still enough bugs and enhancement possibilitys
 since this is an alpha version.
 
 .SH SEE ALSO
-.B mke2fs(8)
+.BR mke2fs( 8 )
 
 .SH AUTHOR
 .LP

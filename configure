@@ -4,8 +4,7 @@
 # this configure-script searches for the needed includes
 # and libraries.
 #
-# it is MUCH faster, smaller and does what I want. :-)
-#
+# it is MUCH faster, smaller as GNU autoconf and does what I want. :-)
 # if you have a very unusual setup or you are cross-compiling
 # you can edit "Local.mak" to fit your needs and to reflect your setup
 # 
@@ -13,7 +12,7 @@
 #
 #######################################################
 
-version=0.1.4
+version=0.1.5
 DIRS=""
 
 for dir in $@; do
