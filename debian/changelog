@@ -1,3 +1,10 @@
+e2fsimage (0.1.6-1) unstable; urgency=low
+
+  * upstream and debian specific things divided
+  * rules and changelog cleaned up
+
+ -- Christian Hohnstaedt <christian@hohnstaedt.de>  Mon,  1 Mar 2004 23:28:28 +0100
+
 e2fsimage (0.1.5) unstable; urgency=low
 
   * copyright added and lintian shown errors removed 
