@@ -35,63 +35,45 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.2 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: util.c,v 1.1 2004/01/17 22:13:59 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
-#include <dirent.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
-int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
+const char *basename(const char *path)
 {
-	struct dirent **namelist;
-	int i,ret, len, count;
-	char path[256], *ppath;
-	struct stat s;	
-	ext2_ino_t newe2dir;
-
-	ret = scandir(dirpath, &namelist, 0, 0);
-	if (ret < 0) {
-		perror("scandir");
-		return -1;
+	const char *bn;
+	/* extract the filename from the path */
+	bn = strrchr(path,'/');
+	if (!bn){
+		bn = path;
 	}
 	else {
-		len = strlen(dirpath);
-		strncpy(path, dirpath, 256);
-		if (path[len-1] != '/') {
-			path[len++] = '/';
-		}
-		ppath = path + len;
-		count = ret;
-		for (i = 0; i<count; i++) {
-			if (!strncmp(".", namelist[i]->d_name, 2)) continue ;
-			if (!strncmp("..", namelist[i]->d_name, 3)) continue ;
-			strncpy(ppath, namelist[i]->d_name, 256 - len);
-			free(namelist[i]);
-			lstat(path, &s);
-			if (S_ISDIR(s.st_mode)) {
-				ret = e2mkdir(fs, e2dir, path, &newe2dir);
-				if (ret) return ret;
-				ret = e2cpdir(fs, newe2dir, path);
-				if (ret) return ret;
-			}
-			if (S_ISREG(s.st_mode)) {
-				ret = e2cp(fs, e2dir, path);
-				if (ret) return ret;
-			}
-			if (S_ISLNK(s.st_mode)) {
-				ret = e2symlink(fs, e2dir, path);
-				if (ret) return ret;
-			}
-			
-        }
-        free(namelist);
-    }
-	return 0;
+		bn++;
+	}
+	/* now ptr points to the basename of 'pathlink' */
+	return bn;
 }
-	   
+
+void init_inode(struct ext2_inode *i, struct stat *s)
+{
+	/* do the root squash */
+	s->st_uid=default_uid;
+	s->st_gid=default_gid;
+
+	memset(i, 0, sizeof(struct ext2_inode));
+
+	i->i_links_count = 1;
+	i->i_mode = s->st_mode;
+	i->i_size = s->st_size;
+	i->i_uid = s->st_uid;
+	i->i_gid = s->st_gid;
+	i->i_atime = s->st_atime;
+	i->i_ctime = s->st_ctime;
+	i->i_mtime = s->st_mtime;
+									  
+}
+			
 

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: symlink.c,v 1.2 2004/01/15 00:24:36 chris2511 Exp $ 
+ * $Id: symlink.c,v 1.3 2004/01/17 22:13:59 chris2511 Exp $ 
  *
  */                           
 
@@ -62,10 +62,8 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 	
 	/* 'stat' the file we want to copy */
 	ret = lstat(pathlink, &s);
-	if(ret) {
-		fprintf(stderr, "Could not 'stat' %s: %s\n", pathlink, strerror(errno));
-		return -1;
-	}
+	ERRNO_ERR(ret, "Could not 'stat': ", pathlink);
+			
 	if (!S_ISLNK(s.st_mode)) {
 		fprintf(stderr, "File '%s' is not a symlink file\n", pathlink);
 		return -1;
@@ -73,10 +71,7 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 
 	/* create a new inode for this file */
 	ret = ext2fs_new_inode(fs, e2dir, s.st_mode, 0, &e2ino);
-	if (ret) {
-		fprintf(stderr, "Could not create new inode for %s\n", pathlink);
-		return -1;
-	}
+	E2_ERR(ret, "Could not create new inode for: ", pathlink);
 	
 	/* populate the new inode */
 	ext2fs_inode_alloc_stats(fs, e2ino, 1);
@@ -84,17 +79,11 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 	init_inode(&inode, &s);
 
 	ret = ext2fs_write_inode(fs, e2ino, &inode);
-	if (ret) {
-		fprintf(stderr, "e2-inode error: %s\n", error_message(ret));
-		return ret;
-	}
+	E2_ERR(ret, "could not write inode", "");
 	
 	/* open the targetfile */
 	ret = ext2fs_file_open(fs, e2ino, EXT2_FILE_WRITE, &e2file);
-	if (ret) {
-		fprintf(stderr, "e2-file open error: %s\n", error_message(ret));
-		return ret;
-	}
+	E2_ERR(ret, "file open error", "");
 
 	/* open the source file */
 	size = readlink(pathlink, buf, BUF_SIZE);
@@ -130,9 +119,8 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 		if (ext2fs_expand_dir(fs, e2dir) == 0)
 			ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_SYMLINK);
 	}			  
-	if (ret) {
-		fprintf(stderr, "e2-link error: %s\n", error_message(ret));
-		return ret;
-	}
+	
+	E2_ERR(ret, "e2-link error", "");
+
 	return 0;	
 }

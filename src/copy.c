@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.3 2004/01/15 00:24:36 chris2511 Exp $ 
+ * $Id: copy.c,v 1.4 2004/01/17 22:13:59 chris2511 Exp $ 
  *
  */                           
 
@@ -47,7 +47,7 @@
 #include <errno.h>
 #define BUF_SIZE 4096
 
-int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile) 
+int e2cp(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile) 
 {
 	
 	ext2_file_t e2file;
@@ -104,7 +104,7 @@ int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 	}
 	
 	if (verbose)
-		printf("Copying %s\n",pathfile);
+		printf("Copying file %s\n",pathfile);
 
 	/* read the input data and write it to the e2 file */
 	ptr = (char *)malloc(BUF_SIZE);

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.4 2004/01/15 00:24:36 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.5 2004/01/17 22:13:59 chris2511 Exp $ 
  *
  */                           
 
@@ -48,14 +48,21 @@
 #ifndef E2FSIMAGE_H
 #define E2FSIMAGE_H
 
+#define E2_ERR(ret,x,y) if (ret) { fprintf(stderr,"%s(%d): %s%s - ext2 error: %s\n", \
+					__FILE__, __LINE__, x, y, error_message(ret)); return ret; }
+#define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
+	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
+
 extern int default_uid;
 extern int default_gid;
 extern int verbose;
 
 int init_fs(ext2_filsys *fs, char *fsname, int size);
-int copy_file(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
+int e2cp(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
 int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
-ext2_ino_t e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path);
+int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
+	   	ext2_ino_t *newdir);
+int e2cpdir(ext2_filsys fs, ext2_ino_t parent, const char *dirpath);
 
 /* functions from util.c */
 const char *basename(const char *path);

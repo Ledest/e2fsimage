@@ -35,63 +35,40 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.2 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.1 2004/01/17 22:13:59 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
-#include <dirent.h>
+#include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
-int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
-{
-	struct dirent **namelist;
-	int i,ret, len, count;
-	char path[256], *ppath;
-	struct stat s;	
-	ext2_ino_t newe2dir;
+int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
+		 ext2_ino_t *newdir) {
 
-	ret = scandir(dirpath, &namelist, 0, 0);
-	if (ret < 0) {
-		perror("scandir");
+	int ret;
+	struct stat s;
+	const char *dname;
+	
+	ret = lstat(path, &s);
+	ERRNO_ERR(ret,"Could not 'stat': ", path);
+	
+	if (!S_ISDIR(s.st_mode)) {
+		fprintf(stderr, "File '%s' is not a directory\n", path);
 		return -1;
 	}
-	else {
-		len = strlen(dirpath);
-		strncpy(path, dirpath, 256);
-		if (path[len-1] != '/') {
-			path[len++] = '/';
-		}
-		ppath = path + len;
-		count = ret;
-		for (i = 0; i<count; i++) {
-			if (!strncmp(".", namelist[i]->d_name, 2)) continue ;
-			if (!strncmp("..", namelist[i]->d_name, 3)) continue ;
-			strncpy(ppath, namelist[i]->d_name, 256 - len);
-			free(namelist[i]);
-			lstat(path, &s);
-			if (S_ISDIR(s.st_mode)) {
-				ret = e2mkdir(fs, e2dir, path, &newe2dir);
-				if (ret) return ret;
-				ret = e2cpdir(fs, newe2dir, path);
-				if (ret) return ret;
-			}
-			if (S_ISREG(s.st_mode)) {
-				ret = e2cp(fs, e2dir, path);
-				if (ret) return ret;
-			}
-			if (S_ISLNK(s.st_mode)) {
-				ret = e2symlink(fs, e2dir, path);
-				if (ret) return ret;
-			}
-			
-        }
-        free(namelist);
-    }
+		  
+	dname = basename(path);
+	
+	ret = ext2fs_mkdir(fs, e2dir, 0, dname);
+	E2_ERR(ret, "Could not 'mkdir': ", dname);
+
+	if (verbose)
+		printf ("Creating directory %s\n", dname);
+
+	if (newdir) {
+		ret = ext2fs_lookup(fs, e2dir, dname, strlen(dname), 0, newdir);
+		E2_ERR(ret, "Could not 'lookup':", dname);
+	}		
 	return 0;
 }
-	   
-
