@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.15 2004/03/06 17:13:04 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.16 2004/03/11 22:42:59 chris2511 Exp $ 
  *
  */                           
 
@@ -87,6 +87,8 @@ int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 		/* skip . and .. */
 		if (!strncmp(".", ppath, 2)) continue ;
 		if (!strncmp("..", ppath, 3)) continue ;
+		/* we must set this again and again because 
+		 * calls to e2filetype_select() will repoint it*/
 		e2c->curr_path = path;
 		/* is there a special file (.DEVICES) */
 		if (!strncmp(e2c->dev_file, ppath, strlen(e2c->dev_file))) {

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.15 2004/02/03 23:22:30 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.16 2004/03/11 22:42:59 chris2511 Exp $ 
  *
  */                           
 
@@ -67,6 +67,21 @@ typedef struct {
 	struct ino_pair *ino_pairs;
 } inodb_t ;
 
+/* uid db */
+struct uidentry {
+	char *name;
+	int uid;
+	int gid;
+	struct uidentry *next;
+};
+
+typedef struct {
+	struct uidentry *first;
+	int size;
+	int maxsize;
+} uiddb_t;
+
+/* global filesystem information */
 typedef struct {
     ext2_filsys fs;
     ext2_ino_t curr_e2dir;
