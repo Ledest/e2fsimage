@@ -1,3 +1,9 @@
+e2fsimage (0.1.7-1) unstable; urgency=low
+
+  * see upstream changelog
+
+ -- Christian Hohnstaedt <christian@hohnstaedt.de>  Sat,  6 Mar 2004 18:36:17 +0100
+
 e2fsimage (0.1.6-1) unstable; urgency=low
 
   * upstream and debian specific things divided

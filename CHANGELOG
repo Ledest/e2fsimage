@@ -1,3 +1,7 @@
+e2fsimage 0.1.7
+  - support for uid gid in .DEVICES file by
+    Marcos Aurelio Lenharo
+
 e2fsimage 0.1.6
   - possible buffer overflow removed
 
