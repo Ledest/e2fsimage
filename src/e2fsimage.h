@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.2 2004/01/13 23:53:25 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.3 2004/01/14 16:01:32 chris2511 Exp $ 
  *
  */                           
 
@@ -51,5 +51,6 @@ extern int verbose;
 
 int init_fs(ext2_filsys *fs, char *fsname, int size);
 int copy_file(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
+int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
 
 #endif
