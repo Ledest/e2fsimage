@@ -19,9 +19,10 @@ ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 endif
 ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
+	STRIP=:
 endif
 
-config.status: configure
+Local.mak: configure
 	dh_testdir
 	# Add here commands to configure the package.
 	prefix=/usr basedir=$(CURDIR)/debian/e2fsimage \
@@ -29,12 +30,11 @@ config.status: configure
 
 build: build-stamp
 
-build-stamp:  config.status
+build-stamp:  Local.mak
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE)
-	#/usr/bin/docbook-to-man debian/e2fsimage.sgml > e2fsimage.1
+	$(MAKE) -j4
 
 	touch build-stamp
 
@@ -66,14 +66,14 @@ binary-arch: build install
 	dh_testroot
 #	dh_installdebconf	
 	dh_installdocs
-	dh_installexamples
-	dh_installmenu
+#	dh_installexamples
+#	dh_installmenu
 #	dh_installlogrotate
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
 #	dh_installinit
-	dh_installcron
+#	dh_installcron
 	dh_installman
 	dh_installinfo
 #	dh_undocumented

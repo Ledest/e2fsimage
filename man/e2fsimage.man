@@ -156,11 +156,11 @@ the name of the file like
 .TP
 .BI type 
 Actually supported are
-.I c\ u
+.I c,\ u
 for character special devices,
 .I b
 for block special devices and
-.I p\ f
+.I p,\ f
 for fifos.
 .TP
 .BI major\ minor 
@@ -170,10 +170,10 @@ This are the major and minor numbers of the device
 The access mode for the file like 0644
 .LP
 A call to mknod like 
-.B mknod -m 0600 ttyS1 4 65
+.B mknod -m 0600 ttyS1 c 4 65
 would result in a line in
 .B dev/.DEVICES 
-as "ttyS1 4 65 0600"
+as "ttyS1 c 4 65 0600"
 
 .SH BUGS
 .LP
@@ -181,7 +181,7 @@ I'm shure there are still enough bugs and enhancement possibilitys
 since this is an alpha version.
 
 .SH SEE ALSO
-.B mkcramfs(8) mke2fs(8)
+.B mke2fs(8)
 
 .SH AUTHOR
 .LP
