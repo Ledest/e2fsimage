@@ -1,7 +1,7 @@
 #
 # vi: set sw=4 ts=4: 
 #
-# $Id: Makefile,v 1.6 2004/03/01 20:12:29 chris2511 Exp $
+# $Id: Makefile,v 1.7 2004/03/01 22:08:29 chris2511 Exp $
 #
 ######################################################################
 
@@ -31,7 +31,7 @@ dist:
 	rm -rf $(TARGET) 
 	cvs export -r $(TAG) -d $(TARGET) e2fsimage && \
 	tar -zc --exclude debian -f $(TARGET).tar.gz $(TARGET) && \
-	cd $(TARGET) && dpkg-buildpackage -uc -b -rfakeroot
+	cd $(TARGET) && dpkg-buildpackage -rfakeroot
 
 .PHONY: $(SUBDIRS)
 
