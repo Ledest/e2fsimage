@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.5 2004/01/27 15:34:12 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.6 2004/01/27 16:48:25 chris2511 Exp $ 
  *
  */                           
 
@@ -97,7 +97,7 @@ int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path)
 	ext2_ino_t newe2dir, e2ino;
 	struct ext2_inode inode;
 	int ret;
-	char *fname;
+	const char *fname;
 	
 	lstat(path, &s);
 	
