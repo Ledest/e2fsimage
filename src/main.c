@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.22 2004/03/23 13:24:31 chris2511 Exp $ 
+ * $Id: main.c,v 1.23 2004/03/23 13:55:38 chris2511 Exp $ 
  *
  */                           
 
@@ -89,7 +89,7 @@ int main(int argc, char *argv[] )
 	
 	/* handle arguments and options */
 	do {
-		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:");
 		switch (c) {
 			case 'v': e2c.verbose = 1; break;
 			case 'p': e2c.preserve_uidgid = 1; break;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[] )
 	if (e2c.pw_file == NULL) {
 		strncpy(passwd_file, e2c.curr_path, 69);
 		strcat(passwd_file, "/etc/passwd");
-		e2c.pw_file = &passwd_file;
+		e2c.pw_file = passwd_file;
 	}
 	/* call mke2fs to create the initial filesystem */
 	if (create) {

@@ -1,14 +1,12 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.14 2004/03/23 13:24:31 chris2511 Exp $
+# $Id: Makefile,v 1.15 2004/03/23 13:55:38 chris2511 Exp $
 #
 ######################################################################
 
 sinclude ../Local.mak
 
 all: e2fsimage
-
-install:
 
 OBJS=main.o copy.o symlink.o util.o mkdir.o \
 	dirent.o mke2fs.o inodb.o sfile.o uiddb.o uids.o passwd.o

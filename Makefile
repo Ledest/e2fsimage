@@ -1,7 +1,7 @@
 #
 # vi: set sw=4 ts=4: 
 #
-# $Id: Makefile,v 1.10 2004/03/04 16:13:19 chris2511 Exp $
+# $Id: Makefile,v 1.11 2004/03/23 13:55:27 chris2511 Exp $
 #
 ######################################################################
 
@@ -11,9 +11,7 @@ SUBDIRS=src man
 all: Local.mak
 install: all
 all install clean: 
-	for x in $(SUBDIRS); do \
-		$(MAKE) -C $$x $@; \
-	done
+	for x in $(SUBDIRS); do $(MAKE) -C $$x $@; done
 
 Local.mak: configure
 	./$<
