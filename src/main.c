@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.13 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: main.c,v 1.14 2004/01/28 12:54:00 chris2511 Exp $ 
  *
  */                           
 
@@ -43,8 +43,9 @@
 #include <unistd.h>
 
 
-static void usage(char *name) {
-	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size]\n"
+static void usage(char *name)
+{
+	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size] "
 			"[-v] [-n] [-D devicefile]\n\n"
 			"-f  filesystem image file\n"
 			"-d  root directory to be copied to the image\n"
@@ -54,7 +55,8 @@ static void usage(char *name) {
 			"-s  size of the filesystem\n"
 			"-D  device filename\n"
 			"-p  preserve uid and gid\n"
-			"-n  do not create the filesystem, use an existing one\n", name);
+			"-n  do not create the filesystem, use an existing one\n\n",
+			name);
 	exit(0);
 }
 
@@ -70,6 +72,8 @@ int main(int argc, char *argv[] )
 	e2c.dev_file = ".DEVICES";
 	e2c.curr_e2dir = EXT2_ROOT_INO;
 	e2c.curr_path = ".";
+	
+	printf("%s - Version: %s\n",  argv[0], VER);
 	
 	do {
 		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:");
