@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mkdir.c,v 1.5 2004/01/28 22:46:21 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.6 2004/01/29 16:06:16 chris2511 Exp $ 
  *
  */                           
 
@@ -67,6 +67,11 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	dname = basename(e2c->curr_path);
 	
 	ret = ext2fs_mkdir(e2c->fs, e2c->curr_e2dir, 0, dname);
+	if (ret == EXT2_ET_DIR_NO_SPACE) {
+		/* resize the directory */
+		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)
+			ret = ext2fs_mkdir(e2c->fs, e2c->curr_e2dir, 0, dname);
+	}
 	E2_ERR(ret, "Could not create dir: ", dname);
 
 	/* say what we do and increase the counter */
