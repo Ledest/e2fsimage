@@ -20,8 +20,13 @@
 #######################################################
 
 version=0.1.4
+DIRS=""
 
-DIRS="$@ /usr /usr/local"
+for dir in $@; do
+  DIRS="$DIRS `cd $dir; pwd`"
+done
+DIRS="$DIRS /usr /usr/local"
+echo $DIRS
 
 CF=""
 LIBS=
