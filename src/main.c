@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.11 2004/01/27 23:24:16 chris2511 Exp $ 
+ * $Id: main.c,v 1.12 2004/01/27 23:35:21 chris2511 Exp $ 
  *
  */                           
 
@@ -60,6 +60,7 @@ static void usage(char *name) {
 			"-v  be verbose\n"
 			"-s  size of the filesystem\n"
 			"-D  device filename\n"
+			"-p  preserve uid and gid\n"
 			"-n  do not create the filesystem, use an existing one\n", name);
 	exit(0);
 }
@@ -68,12 +69,12 @@ int main(int argc, char *argv[] )
 {
 	int ret = 0, c, create=1, ksize=4096;
 	ext2_filsys fs;
-	char *e2fsfile = NULL, *rootdir = NULL;
+	char *e2fsfile = NULL, *rootdir = ".";
 	
 	init_ext2_err_tbl();
 	
 	do {
-		c = getopt(argc, argv, "vnhf:d:u:g:s:D:");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:");
 		switch (c) {
 			case 'v': verbose = 1; break;
 			case 'p': preserve_uidgid = 1; break;

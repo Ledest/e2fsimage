@@ -14,6 +14,10 @@ e2fsimage \- create and populate an ext2 filesystem image as non-root user
 ] [
 .I -s size
 ] [
+.I -D device filename
+] [
+.I -p
+] [
 .I -v
 ] [
 .I -n
@@ -106,6 +110,11 @@ This option allows to reuse an existing filesystem image defined by
 .B \-f
 The existing content is not modified by any means but there
 may not exist a file with the same name as a newly created one.
+
+.TP
+.BI \-p
+Preserve original file owner. If this option is omitted all files in the 
+image will belong to root.
 
 .TP
 .BI \-s\  size
