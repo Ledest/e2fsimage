@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.2 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.3 2004/01/18 13:52:20 chris2511 Exp $ 
  *
  */                           
 
@@ -46,13 +46,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+/*
+ * Scan a directory and copy all the files to the e2dir
+ * Arguments:
+ *  fs - the filesystem
+ *  e2dir - the directory inode in the e2file
+ *  dirpath - the name of the directory containing all subdirs upto here
+ */
+
 int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
 {
 	struct dirent **namelist;
 	int i,ret, len, count;
 	char path[256], *ppath;
-	struct stat s;	
-	ext2_ino_t newe2dir;
 
 	ret = scandir(dirpath, &namelist, 0, 0);
 	if (ret < 0) {
@@ -72,26 +78,34 @@ int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
 			if (!strncmp("..", namelist[i]->d_name, 3)) continue ;
 			strncpy(ppath, namelist[i]->d_name, 256 - len);
 			free(namelist[i]);
-			lstat(path, &s);
-			if (S_ISDIR(s.st_mode)) {
-				ret = e2mkdir(fs, e2dir, path, &newe2dir);
-				if (ret) return ret;
-				ret = e2cpdir(fs, newe2dir, path);
-				if (ret) return ret;
-			}
-			if (S_ISREG(s.st_mode)) {
-				ret = e2cp(fs, e2dir, path);
-				if (ret) return ret;
-			}
-			if (S_ISLNK(s.st_mode)) {
-				ret = e2symlink(fs, e2dir, path);
-				if (ret) return ret;
-			}
-			
+			ret = e2filetype_select(fs, e2dir, path);
+			if (ret) return ret;
         }
         free(namelist);
     }
 	return 0;
 }
 	   
-
+int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path)
+{
+	struct stat s;  
+	ext2_ino_t newe2dir;
+	int ret;
+	
+	lstat(path, &s);
+	if (S_ISDIR(s.st_mode)) {
+		ret = e2mkdir(fs, e2dir, path, &newe2dir);
+		if (ret) return ret;
+		ret = e2cpdir(fs, newe2dir, path);
+		if (ret) return ret;
+	}
+	if (S_ISREG(s.st_mode)) {
+		ret = e2cp(fs, e2dir, path);
+		if (ret) return ret;
+	}
+	if (S_ISLNK(s.st_mode)) {
+		ret = e2symlink(fs, e2dir, path);
+		if (ret) return ret;
+	}
+	return 0;
+}	

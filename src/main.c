@@ -35,27 +35,47 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.5 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: main.c,v 1.6 2004/01/18 13:52:20 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
+#include <unistd.h>
 
 int default_uid = 0;
 int default_gid = 0;
-int verbose = 1;
+int verbose = 0;
+int preserve_uidgid = 0;
+
+static void usage(char *name) {
+	printf("%s [-o outfile] [-d rootdir] [-u uid] [-g gid] [-v] [-c]", name);
+	exit(0);
+}
 
 int main(int argc, char *argv[] )
 {
-	int ret = 0, i;
+	int ret = 0, c;
 	ext2_filsys fs;
-	ext2_ino_t thedir = EXT2_ROOT_INO;
-	char *e2fsfile = "e2file";
-   	
+	char *e2fsfile = NULL, *rootdir = NULL;
+	
 	init_ext2_err_tbl();
 	
+	do {
+		c = getopt(argc, argv, "vcho:d:u:g:");
+		switch (c) {
+			case 'v': verbose = 1; break;
+			case 'p': preserve_uidgid = 1; break;
+			case 'u': default_uid = atoi(optarg); break;
+			case 'g': default_gid = atoi(optarg); break;
+			case 'o': e2fsfile = optarg; break;
+			case 'd': rootdir = optarg; break;
+			case 'h': usage(argv[0]); break;
+		}
+			 
+	} while (c >= 0);
 //	init_fs(&fs, "e2file", 1024);
 //	fs->umask = 022;	
+	if(! (rootdir && e2fsfile)) usage (argv[0]);
 	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &fs);
 	E2_ERR(ret, "Error opening fs: ", e2fsfile);
 
@@ -66,7 +86,7 @@ int main(int argc, char *argv[] )
 		fprintf(stderr, "Error give src dir\n");
 		return -1;
 	}
-	e2cpdir(fs, EXT2_ROOT_INO, argv[1]);
+	e2cpdir(fs, EXT2_ROOT_INO, rootdir);
 /*
 	for(i=0; i<5; i++) {
 		ret = e2mkdir(fs, thedir, "src", &thedir);
@@ -83,3 +103,4 @@ int main(int argc, char *argv[] )
 
 	return ret;
 }
+

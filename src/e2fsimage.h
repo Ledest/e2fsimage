@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.5 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.6 2004/01/18 13:52:20 chris2511 Exp $ 
  *
  */                           
 
@@ -56,6 +56,7 @@
 extern int default_uid;
 extern int default_gid;
 extern int verbose;
+extern int preserve_uidgid;
 
 int init_fs(ext2_filsys *fs, char *fsname, int size);
 int e2cp(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
@@ -63,6 +64,7 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
 int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
 	   	ext2_ino_t *newdir);
 int e2cpdir(ext2_filsys fs, ext2_ino_t parent, const char *dirpath);
+int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path);
 
 /* functions from util.c */
 const char *basename(const char *path);
