@@ -41,6 +41,7 @@ build-stamp:  Local.mak
 clean:
 	dh_testdir
 	dh_testroot
+	dh_clean
 	rm -f build-stamp 
 
 	# Add here commands to clean up after the build process.
