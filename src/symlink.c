@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: symlink.c,v 1.3 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: symlink.c,v 1.4 2004/01/27 15:34:12 chris2511 Exp $ 
  *
  */                           
 
@@ -109,6 +109,10 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 		fprintf(stderr, "Error 'size matters' Size:%ld, Written:%d\n", size, written);
 		return -1;
 	}
+	
+	ret = inodb_add(ino_db, s.st_ino, e2ino);
+	if (ret) return -1;
+
 	
 	fname = basename(pathlink);
 	

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.2 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.3 2004/01/27 15:34:12 chris2511 Exp $ 
  *
  */                           
 
@@ -47,8 +47,8 @@
 #include <errno.h>
 #define BUF_SIZE 4096
 
-int special_inode(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev,
-	int rdev, mode_t mode) 
+static int special_inode(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev,
+	int rdev, mode_t mode, ino_t ino) 
 {
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
@@ -65,8 +65,13 @@ int special_inode(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev,
 	memset(&s, 0, sizeof(struct stat));
 	s.st_mode = mode;
 	
+	if (ino) { 
+		ret = inodb_add(ino_db, ino, e2ino);
+		if (ret) return -1;
+	}
+	
 	init_inode(&inode, &s);
-	//inode.i_dev = rdev;
+	inode.i_block[0] = rdev;
 
 	ret = ext2fs_write_inode(fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
@@ -84,30 +89,55 @@ int special_inode(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev,
 	return 0;	
 }
 
+int e2mknod(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
+{
+	int ret;
+	struct stat s;
+	
+	ret = lstat(pathfile, &s);
+    ERRNO_ERR(ret, "Could not stat: ", pathfile);
+	
+	if (!(S_ISCHR(s.st_mode) || S_ISBLK(s.st_mode)) ) {
+		fprintf(stderr, "File '%s' is not a block or charspecial device\n", pathfile);
+		return -1;
+	}
+	
+	return special_inode(fs, e2dir, basename(pathfile), s.st_rdev, s.st_mode, s.st_ino);
+}
+			
 int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 {
 	FILE *fp;
-	char dir[256], fname[80], *pdir, type;
-	int n, major, minor, mode;
+	char fname[80], type;
+	int n, major, minor, mode, ln=0;
 	dev_t rdev;
-	
-
-	/*copy the full name and remove the basename */
-	strncpy(dir, pathdev, 256);
-	pdir = strrchr(dir, '/');
-	pdir[0] = '\0';
 	
 	fp = fopen(pathdev, "r");
 	ERRNO_ERR(!fp, "Failed to open: ", pathdev);
+	fname[0] = '\0';
 
-	while ((n=fscanf(fp, "%79s %c %d %d %o", fname, &type, &major, &minor, &mode))) {
+	while ((n=fscanf(fp, "%79s %c %d %d %o",
+			fname, &type, &major, &minor, &mode))>0) {
+		ln++;
+		
+		if (fname[0] == '\0' ) continue;
+		if (n != 5) {
+			fprintf(stderr, "Bad entry in %s, line %d (%s)\n", pathdev, ln, fname);
+			return -1;
+		}	
 		rdev = (major << 8) + minor;
-		if (type == 'c')
-			mode |= S_IFCHR;
-		if (type == 'b')
-			mode |= S_IFBLK;
-
-		special_inode(fs, e2dir, dir, rdev, mode);
+		switch (type) {
+			case 'c' : mode |= S_IFCHR; break;
+			case 'b' : mode |= S_IFBLK; break;
+			default:
+				fprintf(stderr, "Bad mode (%c) in %s, line %d\n", type, pathdev, ln);
+				return -1;
+		}
+		if (verbose)
+			printf("Creating special file: %s (%c, Major %d, Minor: %d)\n",
+					fname, type, major, minor);
+		special_inode(fs, e2dir, fname, rdev, mode, 0);
+		fname[0] = '\0';
 	}
 	return 0;
 }				

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.7 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.8 2004/01/27 15:34:12 chris2511 Exp $ 
  *
  */                           
 
@@ -55,12 +55,16 @@
 
 int mke2fs(const char *fname, int size);
 int init_fs(ext2_filsys *fs, char *fsname, int size);
+
 int e2cp(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
 int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
 int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
 	   	ext2_ino_t *newdir);
 int e2cpdir(ext2_filsys fs, ext2_ino_t parent, const char *dirpath);
+int e2mknod(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile);
+
 int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path);
+int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev);
 
 /* functions from util.c */
 const char *basename(const char *path);

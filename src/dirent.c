@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.4 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.5 2004/01/27 15:34:12 chris2511 Exp $ 
  *
  */                           
 
@@ -74,11 +74,15 @@ int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
 		ppath = path + len;
 		count = ret;
 		for (i = 0; i<count; i++) {
-			if (!strncmp(".", namelist[i]->d_name, 2)) continue ;
-			if (!strncmp("..", namelist[i]->d_name, 3)) continue ;
-			if (!strncmp("._DEVICES_.", namelist[i]->d_name, 12)) continue ;
 			strncpy(ppath, namelist[i]->d_name, 256 - len);
 			free(namelist[i]);
+			if (!strncmp(".", ppath, 2)) continue ;
+			if (!strncmp("..", ppath, 3)) continue ;
+			if (!strncmp("._DEVICES_.", ppath, 12)) {
+				ret = read_special_file(fs, e2dir, path);
+				if (ret) return ret;
+				continue;
+			}
 			ret = e2filetype_select(fs, e2dir, path);
 			if (ret) return ret;
         }
@@ -90,10 +94,42 @@ int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
 int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path)
 {
 	struct stat s;  
-	ext2_ino_t newe2dir;
+	ext2_ino_t newe2dir, e2ino;
+	struct ext2_inode inode;
 	int ret;
+	char *fname;
 	
 	lstat(path, &s);
+	
+	e2ino = inodb_search(ino_db, s.st_ino);
+	if (e2ino != 0) {
+		/* hard link */
+		ret = ext2fs_read_inode(fs, e2ino, &inode);
+		E2_ERR(ret, "Ext2 read Inode Error", "");
+		
+		inode.i_links_count++;
+		
+		ret = ext2fs_write_inode(fs, e2ino, &inode);
+		E2_ERR(ret, "Ext2 write Inode Error", "");
+				 
+		if (verbose)
+			printf("Creating hard link %s\n", path);
+
+		fname = basename(path);
+		
+		/* It is time to link the inode into the directory */
+		ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+		if (ret == EXT2_ET_DIR_NO_SPACE) {
+			/* resize the directory */
+			if (ext2fs_expand_dir(fs, e2dir) == 0)
+				ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+		}			  
+		E2_ERR(ret, "Ext2 Link Error", fname);
+		
+		return 0;
+		
+	}
+	
 	if (S_ISDIR(s.st_mode)) {
 		ret = e2mkdir(fs, e2dir, path, &newe2dir);
 		if (ret) return ret;
@@ -106,6 +142,10 @@ int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path)
 	}
 	if (S_ISLNK(s.st_mode)) {
 		ret = e2symlink(fs, e2dir, path);
+		if (ret) return ret;
+	}
+	if (S_ISCHR(s.st_mode) || S_ISBLK(s.st_mode)) {
+		ret = e2mknod(fs, e2dir, path);
 		if (ret) return ret;
 	}
 	return 0;

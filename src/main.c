@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.9 2004/01/27 00:04:57 chris2511 Exp $ 
+ * $Id: main.c,v 1.10 2004/01/27 15:34:12 chris2511 Exp $ 
  *
  */                           
 
@@ -98,7 +98,23 @@ int main(int argc, char *argv[] )
 
 	ext2fs_read_inode_bitmap(fs);
 	ext2fs_read_block_bitmap(fs);
-
+#if 0
+	{
+		struct ext2_inode in;
+		int i;
+		ext2fs_read_inode(fs, 13, &in);
+		for (i=0; i<sizeof(struct ext2_inode); i++) {
+			if (i%4 == 0) printf("\n");
+			printf(" %03d", ((char *)&in)[i]);
+		}
+		printf("\n\n");
+		ext2fs_read_inode(fs, 15, &in);
+		for (i=0; i<sizeof(struct ext2_inode); i++) {
+			if (i%4 == 0) printf("\n");
+			printf(" %03d", ((char *)&in)[i]);
+		}
+	}
+#endif
 	ret = e2cpdir(fs, EXT2_ROOT_INO, rootdir);
 	inodb_free(ino_db);
 	if (ret) return ret;
