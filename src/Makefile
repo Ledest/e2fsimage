@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.5 2004/01/17 22:13:59 chris2511 Exp $
+# $Id: Makefile,v 1.6 2004/01/25 23:00:41 chris2511 Exp $
 #
 ######################################################################
 
@@ -10,7 +10,7 @@ all: e2fsimage
 
 install:
 
-OBJS=initfs.o main.o copy.o symlink.o util.o mkdir.o dirent.o
+OBJS=initfs.o main.o copy.o symlink.o util.o mkdir.o dirent.o sfile.o
 
 e2fsimage: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^

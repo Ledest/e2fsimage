@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mkdir.c,v 1.1 2004/01/17 22:13:59 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.2 2004/01/25 23:00:43 chris2511 Exp $ 
  *
  */                           
 
@@ -61,14 +61,14 @@ int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
 	dname = basename(path);
 	
 	ret = ext2fs_mkdir(fs, e2dir, 0, dname);
-	E2_ERR(ret, "Could not 'mkdir': ", dname);
+	E2_ERR(ret, "Could not create dir: ", dname);
 
 	if (verbose)
 		printf ("Creating directory %s\n", dname);
 
 	if (newdir) {
 		ret = ext2fs_lookup(fs, e2dir, dname, strlen(dname), 0, newdir);
-		E2_ERR(ret, "Could not 'lookup':", dname);
+		E2_ERR(ret, "Could not Ext2-lookup: ", dname);
 	}		
 	return 0;
 }

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.6 2004/01/18 13:52:20 chris2511 Exp $ 
+ * $Id: main.c,v 1.7 2004/01/25 23:00:42 chris2511 Exp $ 
  *
  */                           
 
@@ -48,26 +48,32 @@ int verbose = 0;
 int preserve_uidgid = 0;
 
 static void usage(char *name) {
-	printf("%s [-o outfile] [-d rootdir] [-u uid] [-g gid] [-v] [-c]", name);
+	printf("%s [-o outfile] [-d rootdir] [-u uid] [-g gid] [-v] [-c]\n\n"
+			"-f  formatted ext2 filesystem image\n"
+			"-d  root directory to create\n"
+			"-u  uid to use instead of the real one\n"
+			"-g  gid to use instead of the real one\n"
+			"-v  be verbose\n"
+			"-c  create the filesystem\n", name);
 	exit(0);
 }
 
 int main(int argc, char *argv[] )
 {
-	int ret = 0, c;
+	int ret = 0, c, create;
 	ext2_filsys fs;
 	char *e2fsfile = NULL, *rootdir = NULL;
 	
 	init_ext2_err_tbl();
 	
 	do {
-		c = getopt(argc, argv, "vcho:d:u:g:");
+		c = getopt(argc, argv, "vchf:d:u:g:");
 		switch (c) {
 			case 'v': verbose = 1; break;
 			case 'p': preserve_uidgid = 1; break;
 			case 'u': default_uid = atoi(optarg); break;
 			case 'g': default_gid = atoi(optarg); break;
-			case 'o': e2fsfile = optarg; break;
+			case 'f': e2fsfile = optarg; break;
 			case 'd': rootdir = optarg; break;
 			case 'h': usage(argv[0]); break;
 		}
@@ -77,25 +83,13 @@ int main(int argc, char *argv[] )
 //	fs->umask = 022;	
 	if(! (rootdir && e2fsfile)) usage (argv[0]);
 	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &fs);
-	E2_ERR(ret, "Error opening fs: ", e2fsfile);
+	E2_ERR(ret, "Error opening filesystem: ", e2fsfile);
 
 	ext2fs_read_inode_bitmap(fs);
 	ext2fs_read_block_bitmap(fs);
 
-	if (argc <2) {
-		fprintf(stderr, "Error give src dir\n");
-		return -1;
-	}
 	e2cpdir(fs, EXT2_ROOT_INO, rootdir);
-/*
-	for(i=0; i<5; i++) {
-		ret = e2mkdir(fs, thedir, "src", &thedir);
-		if(ret) return ret;
-	}
 	
-	copy_file(fs, thedir, "src/e2fsimage.h");
-	e2symlink(fs, thedir, "src/lnk2e2fsimage.h");
-*/
 	ext2fs_flush(fs);
 
 	ret = ext2fs_close(fs);

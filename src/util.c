@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: util.c,v 1.2 2004/01/18 13:52:20 chris2511 Exp $ 
+ * $Id: util.c,v 1.3 2004/01/25 23:00:44 chris2511 Exp $ 
  *
  */                           
 
@@ -53,7 +53,7 @@ const char *basename(const char *path)
 	else {
 		bn++;
 	}
-	/* now ptr points to the basename of 'pathlink' */
+	/* now ptr points to the basename of 'path' */
 	return bn;
 }
 
