@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: symlink.c,v 1.5 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: symlink.c,v 1.6 2004/01/28 20:17:28 chris2511 Exp $ 
  *
  */                           
 
@@ -94,6 +94,8 @@ int e2symlink(e2i_ctx_t *e2c)
 	
 	if (e2c->verbose)
 		printf("Copying symlink %s\n",e2c->curr_path);
+	
+	e2c->cnt.softln++;
 	
 	ret = ext2fs_file_write(e2file, buf, size, &written);
 	if (ret) {

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mkdir.c,v 1.3 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.4 2004/01/28 20:17:28 chris2511 Exp $ 
  *
  */                           
 
@@ -65,6 +65,8 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	if (e2c->verbose)
 		printf ("Creating directory %s\n", dname);
 
+	e2c->cnt.dir++;
+	
 	if (newdir) {
 		ret = ext2fs_lookup(e2c->fs, e2c->curr_e2dir, dname, strlen(dname), 0, newdir);
 		E2_ERR(ret, "Could not Ext2-lookup: ", dname);

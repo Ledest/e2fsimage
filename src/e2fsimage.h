@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.11 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.12 2004/01/28 20:17:28 chris2511 Exp $ 
  *
  */                           
 
@@ -52,6 +52,8 @@
 					__FILE__, __LINE__, x, y, error_message(ret)); return ret; }
 #define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
 	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
+
+#define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x))
 
 /* inode DB */
 struct ino_pair {
@@ -76,6 +78,9 @@ typedef struct {
     int verbose;
     int preserve_uidgid;
     const char *dev_file;
+	struct {
+		int dir, regf, specf, hardln, softln;
+	} cnt;
 } e2i_ctx_t;
 
 int mke2fs(const char *fname, int size);

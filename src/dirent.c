@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.8 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.9 2004/01/28 20:17:28 chris2511 Exp $ 
  *
  */                           
 
@@ -116,6 +116,8 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 		printf("Creating hard link %s\n", e2c->curr_path);
 
 	fname = basename(e2c->curr_path);
+	
+	e2c->cnt.hardln++;
 		
 	/* It is time to link the inode into the directory */
 	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_REG_FILE);
@@ -158,7 +160,7 @@ int e2filetype_select(e2i_ctx_t *e2c)
 		ret = e2symlink(e2c);
 		if (ret) return ret;
 	}
-	if (S_ISCHR(s.st_mode) || S_ISBLK(s.st_mode)) {
+	if (S_ISSF(s.st_mode)) {
 		ret = e2mknod(e2c);
 		if (ret) return ret;
 	}

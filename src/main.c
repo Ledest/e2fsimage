@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.15 2004/01/28 18:56:52 chris2511 Exp $ 
+ * $Id: main.c,v 1.16 2004/01/28 20:17:28 chris2511 Exp $ 
  *
  */                           
 
@@ -115,6 +115,10 @@ int main(int argc, char *argv[] )
 	ret = ext2fs_close(e2c.fs);
 	E2_ERR(ret, "Error closing the filesystem file:", e2fsfile);
 
+	printf("Copied %d Directorys, %d regular files, %d symlinks\n"
+			"%d hard links and %d special files - total %d\n",
+			e2c.cnt.dir, e2c.cnt.regf, e2c.cnt.softln, e2c.cnt.hardln, e2c.cnt.specf, 
+			e2c.cnt.dir+ e2c.cnt.regf+ e2c.cnt.softln+ e2c.cnt.hardln+ e2c.cnt.specf); 
 	return ret;
 }
 

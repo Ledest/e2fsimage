@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.6 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.7 2004/01/28 20:17:28 chris2511 Exp $ 
  *
  */                           
 
@@ -84,6 +84,8 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname,  int rdev, mode_t mo
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
 	
+	e2c->cnt.specf++;
+	
 	/* It is time to link the inode into the directory */
 	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, e2mod);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {
@@ -103,7 +105,7 @@ int e2mknod(e2i_ctx_t *e2c)
 	ret = lstat(e2c->curr_path, &s);
     ERRNO_ERR(ret, "Could not stat: ", e2c->curr_path);
 	
-	if (!(S_ISCHR(s.st_mode) || S_ISBLK(s.st_mode)) ) {
+	if (!(S_ISSF(s.st_mode)) ) {
 		fprintf(stderr, "File '%s' is not a block or charspecial device\n", e2c->curr_path);
 		return -1;
 	}
