@@ -1,0 +1,24 @@
+e2fsimage 0.1.6
+  - possible buffer overflow removed
+
+e2fsimage 0.1.5
+  - documentation updated
+  - mke2fs is called with execlp
+
+e2fsimage 0.1.4
+  - support for static linking against libext2fs.a
+  - support for fifos
+  - code cleanup and documentation
+  - resize e2dir if mkdir fails
+
+e2fsimage 0.1.3
+  - documentation updated
+  - .DEVICES file parser improved
+  - global variables removed
+  - filetype of special files in directory entry adjusted
+
+e2fsimage 0.1.2
+
+  - support for block and character special devices
+  - hard links to other than regular files supported now
+

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mke2fs.c,v 1.2 2004/02/21 16:57:09 chris2511 Exp $ 
+ * $Id: mke2fs.c,v 1.3 2004/03/01 20:12:30 chris2511 Exp $ 
  *
  */                           
 
@@ -52,6 +52,7 @@ int mke2fs(const char *fname, int size)
 	int pid, i, status, fd;
 	FILE *fp;
 	char *buf, *bp ;
+	char *newpath = ":/sbin:/usr/sbin:/usr/local/sbin";
 	
 	/* open the target filesystem image */
 	fp = fopen(fname, "wb+");
@@ -75,10 +76,10 @@ int mke2fs(const char *fname, int size)
 	/* redirect stdout of mke2fs to dev/null */
 	fd = open("/dev/null", O_WRONLY);
 	
-	/* add /sbin /usr/sbin and /usr/local/sbin to the PATH */
+	/* add /sbin, /usr/sbin and /usr/local/sbin to the PATH */
 	bp = getenv("PATH");
-	strncpy(buf, bp, 1000);
-	strcat(buf, ":/sbin:/usr/sbin:/usr/local/sbin" ); 
+	strncpy(buf, bp, 1023 - strlen(newpath));
+	strcat(buf, newpath ); 
 	
 	pid = fork();
 	if (!pid) {
@@ -87,7 +88,7 @@ int mke2fs(const char *fname, int size)
 		
 		execlp("mkfs.ext2", "mkfs.ext2", "-F", fname, NULL);
 		execlp("mke2fs", "mke2fs", "-F", fname, NULL);
-		fprintf(stderr,"Hoppla !!\n");
+		fprintf(stderr,"Could not execute 'mkfs.ext2' or 'mke2fs'\n");
 	}
 	waitpid(pid, &status, 0);
 	if (fd) close(fd);
