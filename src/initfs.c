@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: initfs.c,v 1.1 2004/01/13 23:02:53 chris2511 Exp $ 
+ * $Id: initfs.c,v 1.2 2004/01/15 00:24:36 chris2511 Exp $ 
  *
  */                           
 
@@ -44,6 +44,90 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#define STRIDE_LENGTH 8
+
+static errcode_t zero_blocks(ext2_filsys fs, blk_t blk, int num,
+                             blk_t *ret_blk, int *ret_count)
+{
+        int             j, count, next_update, next_update_incr;
+        static char     *buf;
+        errcode_t       retval;
+
+        /* If fs is null, clean up the static buffer and return */
+        if (!fs) {
+                if (buf) {
+                        free(buf);
+                        buf = 0;
+                }
+                return 0;
+        }
+        /* Allocate the zeroizing buffer if necessary */
+        if (!buf) {
+                buf = malloc(fs->blocksize * STRIDE_LENGTH);
+                if (!buf) {
+						fprintf(stderr, "malloc() failed\n");
+                        return -1; 
+                }
+                memset(buf, 0, fs->blocksize * STRIDE_LENGTH);
+        }
+        /* OK, do the write loop */
+        next_update = 0;
+        next_update_incr = num / 100;
+        if (next_update_incr < 1)
+                next_update_incr = 1;
+        for (j=0; j < num; j += STRIDE_LENGTH, blk += STRIDE_LENGTH) {
+                if (num-j > STRIDE_LENGTH)
+                        count = STRIDE_LENGTH;
+                else
+                        count = num - j;
+                retval = io_channel_write_blk(fs->io, blk, count, buf);
+                if (retval) {
+                        if (ret_count)
+                                *ret_count = count;
+                        if (ret_blk)
+                                *ret_blk = blk;
+                        return retval;
+                }
+        }
+        return 0;
+}
+
+
+static void write_inode_tables(ext2_filsys fs)
+{
+        errcode_t       retval;
+        blk_t           blk;
+        int             i, num;
+
+        for (i = 0; i < fs->group_desc_count; i++) {
+
+                blk = fs->group_desc[i].bg_inode_table;
+                num = fs->inode_blocks_per_group;
+
+                retval = zero_blocks(fs, blk, num, &blk, &num);
+                if (retval) {
+                        fprintf(stderr, "Could not write %d blocks "
+                                "in inode table starting at %d: %s\n",
+                                num, blk, error_message(retval));
+                }
+        }
+        zero_blocks(0, 0, 0, 0, 0);
+}
+
+static void create_bad_block_inode(ext2_filsys fs, badblocks_list bb_list)
+{
+        errcode_t       retval;
+
+        ext2fs_mark_inode_bitmap(fs->inode_map, EXT2_BAD_INO);
+        fs->group_desc[0].bg_free_inodes_count--;
+        fs->super->s_free_inodes_count--;
+        retval = ext2fs_update_bb_inode(fs, bb_list);
+        if (retval) {
+			//error
+        }
+
+}
 
 static int create_root_dir(ext2_filsys fs)
 {
@@ -55,6 +139,12 @@ static int create_root_dir(ext2_filsys fs)
 		fprintf(stderr, "Error while creating root dir");
 		return 1;
 	}
+	retval = ext2fs_mkdir(fs, EXT2_ROOT_INO, 0, "lost+found");
+	if (retval) {
+		fprintf(stderr, "Error while creating lnf dir");
+		return 1;
+	}
+#if 0
 	retval = ext2fs_read_inode(fs, EXT2_ROOT_INO, &inode);
 	if (retval) {
 		fprintf(stderr, "Error while reading root inode");
@@ -69,6 +159,8 @@ static int create_root_dir(ext2_filsys fs)
 		fprintf(stderr, "Error while setting root inode ownership");
 		return 1;
 	}
+#endif
+	
 	return 0;
 }
 
@@ -80,13 +172,19 @@ int init_fs(ext2_filsys *fs, char *fsname, int size)
 	struct stat s;
 	char *buf;
 	FILE *fp;
-	
+	badblocks_list  bb_list = 0;
+
 	memset(&super, 0, sizeof(struct ext2_super_block) );
 
 	super.s_rev_level = 1; 
 	super.s_feature_incompat |= EXT2_FEATURE_INCOMPAT_FILETYPE;
 	super.s_feature_ro_compat |= EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER;
-	super.s_blocks_count = size/1024;
+	super.s_blocks_count = size; /* size is in kilobyte */
+	super.s_creator_os = EXT2_OS_LINUX;
+	super.s_log_block_size = 0;
+	super.s_log_frag_size = 0;
+	super.s_inodes_count = size >> 3;
+	super.s_free_inodes_count = 119;
 	
 	ret = stat(fsname, &s);
 	
@@ -94,10 +192,8 @@ int init_fs(ext2_filsys *fs, char *fsname, int size)
 		if (!S_ISREG(s.st_mode)) {
 			fprintf(stderr, "Operation on non regular file '%s' cowardly refused\n",
 				   	fsname);
-			return 1;
+			return -1;
 		}
-		/* use the original size if size is smaller */
-		if (size < s.st_size) size = s.st_size;
 	}
 	fp = fopen(fsname, "wb+");
 	if (!fp) {
@@ -110,10 +206,11 @@ int init_fs(ext2_filsys *fs, char *fsname, int size)
 		fclose(fp);
 		return -1;
 	}
-	for (i=0; i<size/1024; i++) {
+	memset(buf, 0, 1024 );
+	
+	for (i=0; i<size; i++) {
 		fwrite(buf, 1024, 1, fp);
 	}
-	fwrite(buf, 1, (size % 1024), fp);
 	free(buf);
 	fclose(fp);
 
@@ -124,15 +221,24 @@ int init_fs(ext2_filsys *fs, char *fsname, int size)
 			ret, fsname);
 		return 2;
 	}
-	
 	(*fs)->super->s_max_mnt_count = 0;
 	(*fs)->super->s_checkinterval = 0;
-	
+	(*fs)->blocksize = 1024;
+	(*fs)->fragsize = 1024;
+
 	ret = ext2fs_allocate_tables(*fs);
 	if (ret) {
 		fprintf(stderr, "Error allocating the inode tables on file '%s'\n", fsname);
 		return 2;
 	}
+	printf("group_desc_count :%d, inode_blocks_per_group: %d\n",
+		   	(*fs)->group_desc_count, (*fs)->inode_blocks_per_group);
 	
-	return create_root_dir(*fs);
+	for (i = 0; i < (*fs)->group_desc_count; i++) {
+		printf("bg_inode_table-%d: %d\n",i,(*fs)->group_desc[i].bg_inode_table);
+	}								   		   
+	//(*fs)->super->s_free_inodes_count = 119;
+	//write_inode_tables(*fs);
+	create_root_dir(*fs);
+	create_bad_block_inode(*fs, bb_list);
 }

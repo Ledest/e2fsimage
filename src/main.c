@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.2 2004/01/13 23:53:25 chris2511 Exp $ 
+ * $Id: main.c,v 1.3 2004/01/15 00:24:36 chris2511 Exp $ 
  *
  */                           
 
@@ -47,20 +47,22 @@ int verbose = 1;
 
 int main(int argc, char *argv[] )
 {
-	int ret;
+	int ret = 0;
 	ext2_filsys fs;
 	
-	init_fs(&fs, "e2file", 2 * 1024*1024);
-
+	init_fs(&fs, "e2file", 1024);
 	fs->umask = 022;	
-
-	ret = ext2fs_mkdir(fs, EXT2_ROOT_INO, 0, "Hallo_Dir");
+//	ret = ext2fs_open ("e2file", EXT2_FLAG_RW, 1, 1024, unix_io_manager, &fs);
+//	if (ret)
+//		fprintf(stderr, "Error opening fs\n");
+	
+	/*ret = ext2fs_mkdir(fs, EXT2_ROOT_INO, 0, "Hallo_Dir");
 	if (ret)
 		fprintf(stderr, "Error creating dir\n");
 	
 	copy_file(fs, EXT2_ROOT_INO, "src/e2fsimage.h");
 	e2symlink(fs, EXT2_ROOT_INO, "src/lnk2e2fsimage.h");
-		
+	*/	
 	ext2fs_flush(fs);
 
 	ret = ext2fs_close(fs);

@@ -1,7 +1,7 @@
 #
 # vi: set sw=4 ts=4: 
 #
-# $Id: Makefile,v 1.1 2004/01/13 23:02:53 chris2511 Exp $
+# $Id: Makefile,v 1.2 2004/01/15 00:24:36 chris2511 Exp $
 #
 ######################################################################
 
@@ -19,6 +19,8 @@ $(SUBDIRS): Local.mak
 Local.mak: configure
 	./$<
 
+distclean: clean
+	rm Local.mak
 
 .PHONY: $(SUBDIRS)
 

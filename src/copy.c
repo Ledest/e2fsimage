@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.2 2004/01/13 23:53:25 chris2511 Exp $ 
+ * $Id: copy.c,v 1.3 2004/01/15 00:24:36 chris2511 Exp $ 
  *
  */                           
 
@@ -70,9 +70,6 @@ int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 		fprintf(stderr, "File '%s' is not a regular file\n", pathfile);
 		return -1;
 	}
-	/* do the root squash */
-	s.st_uid=default_uid;
-	s.st_gid=default_gid;
 
 	/* create a new inode for this file */
 	ret = ext2fs_new_inode(fs, e2dir, s.st_mode, 0, &e2ino);
@@ -83,17 +80,9 @@ int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 	
 	/* populate the new inode */
 	ext2fs_inode_alloc_stats(fs, e2ino, 1);
-	memset(&inode, 0, sizeof(inode));
-	
-	inode.i_links_count = 1;
-	inode.i_mode = s.st_mode;
-	inode.i_size = s.st_size;
-	inode.i_uid = s.st_uid;
-	inode.i_gid = s.st_gid;
-	inode.i_atime = s.st_atime;
-	inode.i_ctime = s.st_ctime;
-	inode.i_mtime = s.st_mtime;
 
+	init_inode(&inode, &s);
+	
 	ret = ext2fs_write_inode(fs, e2ino, &inode);
 	if (ret) {
 		fprintf(stderr, "e2-inode error: %s\n", error_message(ret));
@@ -151,16 +140,8 @@ int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 		fprintf(stderr, "Error 'size matters' Inode:%ld, File:%ld\n", s.st_size, size);
 		return -1;
 	}
-	/* extract the filename from the path */
-	fname = strrchr(pathfile,'/');
-	if (!fname){
-		fname = pathfile;
-	}
-	else {
-		fname++;
-	}
-	/* now ptr points to the basename of 'pathfile' */
-	
+	fname = basename(pathfile);
+
 	/* It is time to link the inode into the directory */
 	ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {

@@ -35,12 +35,15 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.3 2004/01/14 16:01:32 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.4 2004/01/15 00:24:36 chris2511 Exp $ 
  *
  */                           
 
 #include <e2p/e2p.h>
 #include <ext2fs/ext2fs.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifndef E2FSIMAGE_H
 #define E2FSIMAGE_H
@@ -52,5 +55,10 @@ extern int verbose;
 int init_fs(ext2_filsys *fs, char *fsname, int size);
 int copy_file(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
 int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
+ext2_ino_t e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path);
+
+/* functions from util.c */
+const char *basename(const char *path);
+void init_inode(struct ext2_inode *i, struct stat *s);
 
 #endif
