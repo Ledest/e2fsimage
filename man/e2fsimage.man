@@ -31,8 +31,8 @@ the existing directory structure
 .
 .br
 Supported filetypes are: regular files, directorys, hard-links
-, soft-links, block special devices and character special devices 
-and of course hidden files.
+, soft-links, block special devices, character special devices,
+fifos and of course hidden files.
 Hard links are resolved to result in hard links in the image.
 Softlinks are copied as they are and not resolved or altered. In the 
 .I rootdir
@@ -91,7 +91,7 @@ option respectively
 The devicefile does contain all special devices to be created, see
 .I DEVICES
 .br
-. The default filename is 
+The default filename is 
 .B .DEVICES
 
 .TP
@@ -156,10 +156,12 @@ the name of the file like
 .TP
 .BI type 
 Actually supported are
-.I c
-for character special devices and
+.I c\ u
+for character special devices,
 .I b
-for block special devices
+for block special devices and
+.I p\ f
+for fifos.
 .TP
 .BI major\ minor 
 This are the major and minor numbers of the device

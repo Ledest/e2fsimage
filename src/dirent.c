@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.11 2004/01/29 12:42:49 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.12 2004/01/29 15:48:11 chris2511 Exp $ 
  *
  */                           
 
@@ -178,6 +178,7 @@ int e2filetype_select(e2i_ctx_t *e2c)
 		case S_IFREG : ret = e2cp(e2c); break;
 		case S_IFLNK : ret = e2symlink(e2c); break;
 		case S_IFCHR :
+		case S_IFIFO :
 		case S_IFBLK : ret = e2mknod(e2c); break;
 		
 		default : fprintf(stderr, "Filetype not supported: %x\n", s.st_mode & S_IFMT);

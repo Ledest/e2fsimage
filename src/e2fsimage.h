@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.13 2004/01/29 12:42:49 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.14 2004/01/29 15:48:11 chris2511 Exp $ 
  *
  */                           
 
@@ -53,7 +53,7 @@
 #define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
 	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
 
-#define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x))
+#define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x))
 
 /* inode DB */
 struct ino_pair {

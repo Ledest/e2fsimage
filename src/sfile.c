@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.8 2004/01/28 22:46:21 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.9 2004/01/29 15:48:11 chris2511 Exp $ 
  *
  */                           
 
@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #define BUF_SIZE 4096
 
 /*
@@ -53,24 +54,21 @@
  * the source inode number (ino) or 0 if read from .DEVICES
  */
 
-static int special_inode(e2i_ctx_t *e2c, const char *fname,  int rdev, mode_t mode, ino_t ino) 
+static int special_inode(e2i_ctx_t *e2c, const char *fname, struct stat *s)
 {
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
 	int ret, e2mod;
-	struct stat s;
 	
 	/* create a new inode for this special device file */
-	ret = ext2fs_new_inode(e2c->fs, e2c->curr_e2dir, mode, 0, &e2ino);
+	ret = ext2fs_new_inode(e2c->fs, e2c->curr_e2dir, s->st_mode, 0, &e2ino);
 	E2_ERR(ret, "Could not create new inode for:", fname);
 	
 	/* populate the new inode */
 	ext2fs_inode_alloc_stats(e2c->fs, e2ino, 1);
-	memset(&s, 0, sizeof(struct stat));
-	s.st_mode = mode;
 	
-	if (ino) { 
-		ret = inodb_add(e2c->ino_db, ino, e2ino);
+	if (s->st_ino) { 
+		ret = inodb_add(e2c->ino_db, s->st_ino, e2ino);
 		if (ret) return -1;
 	}
 	
@@ -79,13 +77,17 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname,  int rdev, mode_t mo
 	 * major and minor do live in i_block[0]
 	 * obvious, eh ?? 
 	 */
-	init_inode(e2c, &inode, &s);
-	inode.i_block[0] = rdev;
+	init_inode(e2c, &inode, s);
+	if(s->st_rdev)
+		inode.i_block[0] = s->st_rdev;
 
 	/* select modetype from mode */
 	e2mod =  EXT2_FT_UNKNOWN;
-	if (S_ISCHR(mode)) e2mod = EXT2_FT_CHRDEV;
-	if (S_ISBLK(mode)) e2mod = EXT2_FT_BLKDEV;
+	switch (s->st_mode & S_IFMT) {
+		case S_IFCHR : e2mod = EXT2_FT_CHRDEV; break;
+		case S_IFBLK : e2mod = EXT2_FT_BLKDEV; break;
+		case S_IFIFO : e2mod = EXT2_FT_FIFO; break;
+	}
 	
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
@@ -124,7 +126,7 @@ int e2mknod(e2i_ctx_t *e2c)
 	if (e2c->verbose)
 		printf("Creating special file: %s\n", e2c->curr_path);
 
-	return special_inode(e2c, basename(e2c->curr_path), s.st_rdev, s.st_mode, s.st_ino);
+	return special_inode(e2c, basename(e2c->curr_path), &s);
 }
 			
 /*
@@ -136,10 +138,15 @@ int read_special_file(e2i_ctx_t *e2c)
 	char fname[80], *line_buf, type;
 	int n, major, minor, mode, ln=0;
 	dev_t rdev;
+	struct stat s;
 	
 	fp = fopen(e2c->curr_path, "r");
 	ERRNO_ERR(!fp, "Failed to open: ", e2c->curr_path);
 	fname[0] = '\0';
+	
+	/* prepare the stat struct */
+	memset(&s, 0, sizeof(struct stat));
+	s.st_atime = s.st_mtime = s.st_ctime = time(NULL);
 	
 	line_buf = (char *)malloc(256);
 	/* iterate over the lines in the device file */
@@ -169,8 +176,11 @@ int read_special_file(e2i_ctx_t *e2c)
 
 		rdev = (major << 8) + minor;
 		switch (type) {
+			case 'u':
 			case 'c' : mode |= S_IFCHR; break;
 			case 'b' : mode |= S_IFBLK; break;
+			case 'p' : 
+			case 'f' : mode |= S_IFIFO; break;
 			default:
 				fprintf(stderr, "Bad mode (%c) in %s, line %d\n",
 					type, e2c->curr_path, ln);
@@ -180,7 +190,10 @@ int read_special_file(e2i_ctx_t *e2c)
 		if (e2c->verbose)
 			printf("Creating special file: %s (%c, Major %d, Minor: %d)\n",
 					fname, type, major, minor);
-		special_inode(e2c, fname, rdev, mode, 0);
+
+		s.st_mode = mode;
+		s.st_rdev = rdev;
+		special_inode(e2c, fname, &s);
 		fname[0] = '\0';
 	}
 	free(line_buf);
