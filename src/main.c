@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.14 2004/01/28 12:54:00 chris2511 Exp $ 
+ * $Id: main.c,v 1.15 2004/01/28 18:56:52 chris2511 Exp $ 
  *
  */                           
 
@@ -93,7 +93,8 @@ int main(int argc, char *argv[] )
 	} while (c >= 0);
 	
 	if (create) {
-		mke2fs(e2fsfile, ksize);
+		ret = mke2fs(e2fsfile, ksize);
+		if (ret !=0 ) return ret;
 	}
 	
 	e2c.ino_db = inodb_init();
