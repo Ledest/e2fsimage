@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.7 2004/01/28 20:17:28 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.8 2004/01/28 22:46:21 chris2511 Exp $ 
  *
  */                           
 
@@ -46,6 +46,12 @@
 #include <string.h>
 #include <errno.h>
 #define BUF_SIZE 4096
+
+/*
+ * create a block or character special device file
+ * with the filename (fname) the mode (mode) and 
+ * the source inode number (ino) or 0 if read from .DEVICES
+ */
 
 static int special_inode(e2i_ctx_t *e2c, const char *fname,  int rdev, mode_t mode, ino_t ino) 
 {
@@ -97,6 +103,12 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname,  int rdev, mode_t mo
 	return 0;	
 }
 
+/*
+ * copy the original special file to the fs
+ * this is an unusual but nevertheless supported case,
+ * because special files can only be created by r00t
+ * using mknod()
+ */
 int e2mknod(e2i_ctx_t *e2c)
 {
 	int ret;
@@ -115,7 +127,9 @@ int e2mknod(e2i_ctx_t *e2c)
 	return special_inode(e2c, basename(e2c->curr_path), s.st_rdev, s.st_mode, s.st_ino);
 }
 			
-
+/*
+ * read the .DEVICES file and create all mentioned devices
+ */
 int read_special_file(e2i_ctx_t *e2c)
 {
 	FILE *fp;
@@ -128,25 +142,31 @@ int read_special_file(e2i_ctx_t *e2c)
 	fname[0] = '\0';
 	
 	line_buf = (char *)malloc(256);
-	
+	/* iterate over the lines in the device file */
 	while (fgets(line_buf, 256, fp) != 0) {
-		ln++;
+		ln++;  /* count the line numbers */
+		/* check for too long lines */
 		if (strlen(line_buf)>254) {
 			char c = line_buf[254];
 			fprintf(stderr, "Line too long %d\n",ln);
+			/* eat up the rest of the line */
 			while (c != '\n' && c >0) c = fgetc(fp);
 			continue;
 		}
+		
 		n = sscanf(line_buf, "%79s %c %d %d %o",
 			fname, &type, &major, &minor, &mode);
 		
 		if (line_buf[0] == '\n' || fname[0] == '#' ) continue;
+
+		/* sanity check */
 		if (n != 5) {
 			fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
 				e2c->curr_path, ln, fname);
 			free(line_buf);
 			return -1;
 		}	
+
 		rdev = (major << 8) + minor;
 		switch (type) {
 			case 'c' : mode |= S_IFCHR; break;

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: inodb.c,v 1.1 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: inodb.c,v 1.2 2004/01/28 22:46:21 chris2511 Exp $ 
  *
  */                           
 
@@ -44,6 +44,18 @@
 
 #define RESIZE 50
 
+/* 
+ * The inode database (inodb) is a lookup table to find inodes
+ * from the source filesystem  and their corresponding inode number
+ * in the target ext2 filesystem.
+ * It is a simple resizeable unsorted array of an integer structure.
+ */
+
+
+/* 
+ * allocate initial space for the maintainance structure 
+ * and the first 50 inode hashes 
+ */
 inodb_t *inodb_init(void)
 {
 	inodb_t *db;
@@ -52,7 +64,7 @@ inodb_t *inodb_init(void)
 		fprintf(stderr, "malloc() failed\n");
 		return 0;
 	}
-	db->size=RESIZE;
+	db->size = RESIZE;
 	db->cnt=0;
 	db->ino_pairs = (struct ino_pair *)malloc(RESIZE * sizeof(struct ino_pair));
 	if (db->ino_pairs == NULL) {
@@ -63,6 +75,10 @@ inodb_t *inodb_init(void)
 	return db;
 }
 
+/* 
+ * adds an inode pair to the stack 
+ * and resizes the stack if nessecary
+ */
 int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2)
 {
 	if (db->cnt >= db->size) {
@@ -81,6 +97,10 @@ int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2)
 	return 0;
 }
 
+/*
+ * iterates over the inode stack and searches for the supplied source inode.
+ * Returns the corresponding ext2inode or 0 if it was not found.
+ */
 ext2_ino_t inodb_search(inodb_t *db, ino_t ino1)
 {
 	int i;
@@ -92,6 +112,9 @@ ext2_ino_t inodb_search(inodb_t *db, ino_t ino1)
 	return 0;
 }
 
+/* 
+ * release all the occupied memory
+ */
 void inodb_free(inodb_t *db)
 {
 	if (db) {

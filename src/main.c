@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.16 2004/01/28 20:17:28 chris2511 Exp $ 
+ * $Id: main.c,v 1.17 2004/01/28 22:46:21 chris2511 Exp $ 
  *
  */                           
 
@@ -66,7 +66,10 @@ int main(int argc, char *argv[] )
 	char *e2fsfile = NULL;
 	e2i_ctx_t e2c;
 	
+	/* initialize ext2fs error table */
 	init_ext2_err_tbl();
+
+	/* prepare data structure */
 	memset(&e2c, 0, sizeof(e2c));
 	
 	e2c.dev_file = ".DEVICES";
@@ -75,6 +78,7 @@ int main(int argc, char *argv[] )
 	
 	printf("%s - Version: %s\n",  argv[0], VER);
 	
+	/* handle arguments and options */
 	do {
 		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:");
 		switch (c) {
@@ -92,33 +96,48 @@ int main(int argc, char *argv[] )
 			 
 	} while (c >= 0);
 	
+	/* call mke2fs to create the initial filesystem */
 	if (create) {
 		ret = mke2fs(e2fsfile, ksize);
 		if (ret !=0 ) return ret;
 	}
 	
+	/* prepare the inode database to lookup hardlinks */
 	e2c.ino_db = inodb_init();
-	
+	if (e2c.ino_db == 0) return -1;
+
+	/* sanity check */
 	if(! (e2c.curr_path && e2fsfile)) usage (argv[0]);
+	
+	/* open and read the filesystem image */
 	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &e2c.fs);
 	E2_ERR(ret, "Error opening filesystem: ", e2fsfile);
 
 	ext2fs_read_inode_bitmap(e2c.fs);
 	ext2fs_read_block_bitmap(e2c.fs);
 	
+	/* trigger the copy of the directory */
 	ret = e2cpdir(&e2c);
+
+	/* release the memory occupied by the inode hash table */
 	inodb_free(e2c.ino_db);
-	if (ret) return ret;
 	
+	/* write the filesystem to the image */
 	ext2fs_flush(e2c.fs);
+	
+	if (ret) return ret;
 	
 	ret = ext2fs_close(e2c.fs);
 	E2_ERR(ret, "Error closing the filesystem file:", e2fsfile);
 
+	/* satisfy the user with some statistics */
 	printf("Copied %d Directorys, %d regular files, %d symlinks\n"
 			"%d hard links and %d special files - total %d\n",
-			e2c.cnt.dir, e2c.cnt.regf, e2c.cnt.softln, e2c.cnt.hardln, e2c.cnt.specf, 
-			e2c.cnt.dir+ e2c.cnt.regf+ e2c.cnt.softln+ e2c.cnt.hardln+ e2c.cnt.specf); 
+			e2c.cnt.dir, e2c.cnt.regf, e2c.cnt.softln, 
+			e2c.cnt.hardln, e2c.cnt.specf, 
+			e2c.cnt.dir+ e2c.cnt.regf+ e2c.cnt.softln+ 
+			e2c.cnt.hardln+ e2c.cnt.specf); 
+
 	return ret;
 }
 

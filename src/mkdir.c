@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mkdir.c,v 1.4 2004/01/28 20:17:28 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.5 2004/01/28 22:46:21 chris2511 Exp $ 
  *
  */                           
 
@@ -43,6 +43,11 @@
 #include <errno.h>
 #include <string.h>
 
+/*
+ * this function creates a new directory inode (returned in newdir)
+ * and the link in the upper directory (e2c->curr_e2dir)
+ * the name is the basename of the current path (e2c->curr_path)
+ */
 int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 
 	int ret;
@@ -52,24 +57,28 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	ret = lstat(e2c->curr_path, &s);
 	ERRNO_ERR(ret,"Could not 'stat': ", e2c->curr_path);
 	
+	/* sanity check */
 	if (!S_ISDIR(s.st_mode)) {
 		fprintf(stderr, "File '%s' is not a directory\n", e2c->curr_path);
 		return -1;
 	}
-		  
+	
+	/* edit the directoryname and create it */
 	dname = basename(e2c->curr_path);
 	
 	ret = ext2fs_mkdir(e2c->fs, e2c->curr_e2dir, 0, dname);
 	E2_ERR(ret, "Could not create dir: ", dname);
 
+	/* say what we do and increase the counter */
 	if (e2c->verbose)
 		printf ("Creating directory %s\n", dname);
 
 	e2c->cnt.dir++;
 	
+	/* lookup the inode of the new directory if requested */
 	if (newdir) {
 		ret = ext2fs_lookup(e2c->fs, e2c->curr_e2dir, dname, strlen(dname), 0, newdir);
 		E2_ERR(ret, "Could not Ext2-lookup: ", dname);
-	}		
+	}
 	return 0;
 }

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.9 2004/01/28 20:17:28 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.10 2004/01/28 22:46:21 chris2511 Exp $ 
  *
  */                           
 
@@ -48,16 +48,12 @@
 
 /*
  * Scan a directory and copy all the files to the e2c->curr_e2dir
- * Arguments:
- *  fs - the filesystem
- *  e2c->curr_e2dir - the directory inode in the e2file
- *  e2c->curr_path - the name of the directory containing all subdirs upto here
+ * using scandir()
  */
-
 int e2cpdir(e2i_ctx_t *e2c)
 {
 	struct dirent **namelist;
-	int i,ret, len, count;
+	int i,ret, len, count, j;
 	char path[256], *ppath;
 
 	ret = scandir(e2c->curr_path, &namelist, 0, 0);
@@ -66,6 +62,7 @@ int e2cpdir(e2i_ctx_t *e2c)
 		return -1;
 	}
 	else {
+		/* construct the new pathname in path[] */
 		len = strlen(e2c->curr_path);
 		strncpy(path, e2c->curr_path, 256);
 		if (path[len-1] != '/') {
@@ -76,21 +73,30 @@ int e2cpdir(e2i_ctx_t *e2c)
 		for (i = 0; i<count; i++) {
 			strncpy(ppath, namelist[i]->d_name, 256 - len);
 			free(namelist[i]);
+			/* skip . and .. */
 			if (!strncmp(".", ppath, 2)) continue ;
 			if (!strncmp("..", ppath, 3)) continue ;
 			e2c->curr_path = path;
-			
+			/* is there a special file (.DEVICES) */
 			if (!strncmp(e2c->dev_file, ppath, strlen(e2c->dev_file))) {
 				ret = read_special_file(e2c);
-				if (ret) return ret;
+				if (ret) break;
 				continue;
 			}
+			/* select the action depending on the filetype */
 			ret = e2filetype_select(e2c);
-			if (ret) return ret;
+			if (ret) break;
         }
+		/* 
+		 * in case of an error iterate over the remaining 
+		 * entries and free them
+		 */
+		for (j = i+1; j<count; j++) {
+			free(namelist[j]);
+		}
         free(namelist);
     }
-	return 0;
+	return ret;
 }
 
 static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
@@ -103,7 +109,7 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 	e2ino = inodb_search(e2c->ino_db, ino);
 	if (e2ino == 0) return 1;
 
-	/* hard link */
+	/* read the inode, increase the link counter and write it back */
 	ret = ext2fs_read_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 read Inode Error", "");
 		
@@ -111,13 +117,14 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 	
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 write Inode Error", "");
-				 
+
+	/* be verbose and do statistics */
 	if (e2c->verbose)
 		printf("Creating hard link %s\n", e2c->curr_path);
-
-	fname = basename(e2c->curr_path);
 	
 	e2c->cnt.hardln++;
+
+	fname = basename(e2c->curr_path);
 		
 	/* It is time to link the inode into the directory */
 	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_REG_FILE);
@@ -143,12 +150,19 @@ int e2filetype_select(e2i_ctx_t *e2c)
 	ret = e2check_hardlink(e2c, s.st_ino);
 	if (ret <= 0) return ret;
 	
+	/* OK, its not a hard link */
 	if (S_ISDIR(s.st_mode)) {
+		/* create the new directory inode */
 		ret = e2mkdir(e2c, &newe2dir);
 		if (ret) return ret;
+		/* 
+		 * call e2cpdir with e2c->curr_e2dir
+		 * set to the newly created inode
+		 */
 		olde2dir = e2c->curr_e2dir;
 		e2c->curr_e2dir = newe2dir;
 		ret = e2cpdir(e2c);
+		/* recover the old directory inode */
 		e2c->curr_e2dir = olde2dir;
 		if (ret) return ret;
 	}
