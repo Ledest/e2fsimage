@@ -106,7 +106,7 @@ main(){ const char *v, *d; ext2fs_get_library_version(&v,&d);
 printf("\nThe version of the e2fs library is: %s, %s\n", v, d);return 0;}
 EOF
 
-if gcc $LIBS $LDIRS $CF $CFLAGS conftest.c -o conftest &>conftest.log ; then
+if gcc $LDIRS $CF $CFLAGS conftest.c $LIBS -o conftest &>conftest.log ; then
   ./conftest || err "Unable to execute a freshly compiled application, maybe you have to adjust your LD_LIBRARY_PATH or /etc/ld.so.conf"
   rm -f conftest.c conftest conftest.log
 else
