@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.10 2004/01/28 22:46:21 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.11 2004/01/29 12:42:49 chris2511 Exp $ 
  *
  */                           
 
@@ -50,53 +50,68 @@
  * Scan a directory and copy all the files to the e2c->curr_e2dir
  * using scandir()
  */
-int e2cpdir(e2i_ctx_t *e2c)
+int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 {
 	struct dirent **namelist;
 	int i,ret, len, count, j;
 	char path[256], *ppath;
-
+	ext2_ino_t olddir;
+	
 	ret = scandir(e2c->curr_path, &namelist, 0, 0);
 	if (ret < 0) {
 		perror("scandir");
 		return -1;
 	}
-	else {
-		/* construct the new pathname in path[] */
-		len = strlen(e2c->curr_path);
-		strncpy(path, e2c->curr_path, 256);
-		if (path[len-1] != '/') {
-			path[len++] = '/';
-		}
-		ppath = path + len;
-		count = ret;
-		for (i = 0; i<count; i++) {
-			strncpy(ppath, namelist[i]->d_name, 256 - len);
-			free(namelist[i]);
-			/* skip . and .. */
-			if (!strncmp(".", ppath, 2)) continue ;
-			if (!strncmp("..", ppath, 3)) continue ;
-			e2c->curr_path = path;
-			/* is there a special file (.DEVICES) */
-			if (!strncmp(e2c->dev_file, ppath, strlen(e2c->dev_file))) {
-				ret = read_special_file(e2c);
-				if (ret) break;
-				continue;
-			}
-			/* select the action depending on the filetype */
-			ret = e2filetype_select(e2c);
+
+	/* prepare the new pathname in path[] */
+	len = strlen(e2c->curr_path);
+	strncpy(path, e2c->curr_path, 256);
+	if (path[len-1] != '/') {
+		path[len++] = '/';
+	}
+	ppath = path + len;
+	count = ret;
+	ret = 0;
+
+	/*
+	 * set the current e2dir to newdir 
+	 * and remember the old one
+	 */
+	olddir = e2c->curr_e2dir;
+	e2c->curr_e2dir = newdir;
+	
+	/* iterate over all directory items */
+	for (i = 0; i<count; i++) {
+		strncpy(ppath, namelist[i]->d_name, 256 - len);
+		free(namelist[i]);
+		/* skip . and .. */
+		if (!strncmp(".", ppath, 2)) continue ;
+		if (!strncmp("..", ppath, 3)) continue ;
+		e2c->curr_path = path;
+		/* is there a special file (.DEVICES) */
+		if (!strncmp(e2c->dev_file, ppath, strlen(e2c->dev_file))) {
+			ret = read_special_file(e2c);
 			if (ret) break;
-        }
-		/* 
-		 * in case of an error iterate over the remaining 
-		 * entries and free them
-		 */
-		for (j = i+1; j<count; j++) {
-			free(namelist[j]);
+			continue;
 		}
-        free(namelist);
-    }
-	return ret;
+		/* select the action depending on the filetype */
+		ret = e2filetype_select(e2c);
+		if (ret) break;
+	}
+	
+	/* recover the old directory inode */
+	e2c->curr_e2dir = olddir;
+	
+	/* 
+	 * in case of an error iterate over the remaining 
+	 * entries and free them
+	 */
+	for (j = i+1; j<count; j++) {
+		free(namelist[j]);
+	}
+	
+	free(namelist);
+    return ret;
 }
 
 static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
@@ -142,42 +157,31 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 int e2filetype_select(e2i_ctx_t *e2c)
 {
 	struct stat s;  
-	ext2_ino_t newe2dir, olde2dir;
+	ext2_ino_t newe2dir;
 	int ret;
 	
 	lstat(e2c->curr_path, &s);
 	
 	ret = e2check_hardlink(e2c, s.st_ino);
 	if (ret <= 0) return ret;
+	ret = -1;
 	
 	/* OK, its not a hard link */
-	if (S_ISDIR(s.st_mode)) {
-		/* create the new directory inode */
-		ret = e2mkdir(e2c, &newe2dir);
-		if (ret) return ret;
-		/* 
-		 * call e2cpdir with e2c->curr_e2dir
-		 * set to the newly created inode
-		 */
-		olde2dir = e2c->curr_e2dir;
-		e2c->curr_e2dir = newe2dir;
-		ret = e2cpdir(e2c);
-		/* recover the old directory inode */
-		e2c->curr_e2dir = olde2dir;
-		if (ret) return ret;
+	switch (s.st_mode & S_IFMT) {
+		case S_IFDIR :
+			/* create the new directory inode */
+			ret = e2mkdir(e2c, &newe2dir);
+			if (ret) break;
+			/* This is the recursive call for every sub directory */
+			ret = e2cpdir(e2c, newe2dir);
+			break;
+		case S_IFREG : ret = e2cp(e2c); break;
+		case S_IFLNK : ret = e2symlink(e2c); break;
+		case S_IFCHR :
+		case S_IFBLK : ret = e2mknod(e2c); break;
+		
+		default : fprintf(stderr, "Filetype not supported: %x\n", s.st_mode & S_IFMT);
 	}
-	if (S_ISREG(s.st_mode)) {
-		ret = e2cp(e2c);
-		if (ret) return ret;
-	}
-	if (S_ISLNK(s.st_mode)) {
-		ret = e2symlink(e2c);
-		if (ret) return ret;
-	}
-	if (S_ISSF(s.st_mode)) {
-		ret = e2mknod(e2c);
-		if (ret) return ret;
-	}
-	return 0;
+	return ret;
 }	
 

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.12 2004/01/28 20:17:28 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.13 2004/01/29 12:42:49 chris2511 Exp $ 
  *
  */                           
 
@@ -89,7 +89,7 @@ int init_fs(ext2_filsys *fs, char *fsname, int size);
 int e2cp(e2i_ctx_t *e2c);
 int e2symlink(e2i_ctx_t *e2c);
 int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir);
-int e2cpdir(e2i_ctx_t *e2c);
+int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir);
 int e2mknod(e2i_ctx_t *e2c);
 
 int e2filetype_select(e2i_ctx_t *e2c);

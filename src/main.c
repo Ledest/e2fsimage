@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.17 2004/01/28 22:46:21 chris2511 Exp $ 
+ * $Id: main.c,v 1.18 2004/01/29 12:42:49 chris2511 Exp $ 
  *
  */                           
 
@@ -73,7 +73,6 @@ int main(int argc, char *argv[] )
 	memset(&e2c, 0, sizeof(e2c));
 	
 	e2c.dev_file = ".DEVICES";
-	e2c.curr_e2dir = EXT2_ROOT_INO;
 	e2c.curr_path = ".";
 	
 	printf("%s - Version: %s\n",  argv[0], VER);
@@ -117,7 +116,7 @@ int main(int argc, char *argv[] )
 	ext2fs_read_block_bitmap(e2c.fs);
 	
 	/* trigger the copy of the directory */
-	ret = e2cpdir(&e2c);
+	ret = e2cpdir(&e2c, EXT2_ROOT_INO);
 
 	/* release the memory occupied by the inode hash table */
 	inodb_free(e2c.ino_db);

@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.9 2004/01/27 23:24:16 chris2511 Exp $
+# $Id: Makefile,v 1.10 2004/01/29 12:42:49 chris2511 Exp $
 #
 ######################################################################
 
@@ -18,7 +18,7 @@ unused_OBJ=initfs.o
 e2fsimage: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-%.o: %.c
+%.o: %.c Makefile ../Local.mak e2fsimage.h
 	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
