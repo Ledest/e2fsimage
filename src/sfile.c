@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.4 2004/01/27 23:24:16 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.5 2004/01/28 09:16:57 chris2511 Exp $ 
  *
  */                           
 
@@ -107,24 +107,36 @@ int e2mknod(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 	return special_inode(fs, e2dir, basename(pathfile), s.st_rdev, s.st_mode, s.st_ino);
 }
 			
+
 int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 {
 	FILE *fp;
-	char fname[80], type;
+	char fname[80], *line_buf, type;
 	int n, major, minor, mode, ln=0;
 	dev_t rdev;
 	
 	fp = fopen(pathdev, "r");
 	ERRNO_ERR(!fp, "Failed to open: ", pathdev);
 	fname[0] = '\0';
-
-	while ((n=fscanf(fp, "%79s %c %d %d %o",
-			fname, &type, &major, &minor, &mode))>0) {
+	
+	line_buf = (char *)malloc(256);
+	
+	while (fgets(line_buf, 256, fp) != 0) {
 		ln++;
+		if (strlen(line_buf)>254) {
+			char c = line_buf[254];
+			fprintf(stderr, "Line too long %d\n",ln);
+			while (c != '\n' && c >0) c = fgetc(fp);
+			continue;
+		}
+		n = sscanf(line_buf, "%79s %c %d %d %o",
+			fname, &type, &major, &minor, &mode);
 		
-		if (fname[0] == '\0' ) continue;
+		if (line_buf[0] == '\n' || fname[0] == '#' ) continue;
 		if (n != 5) {
-			fprintf(stderr, "Bad entry in %s, line %d (%s)\n", pathdev, ln, fname);
+			fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
+				pathdev, ln, fname);
+			free(line_buf);
 			return -1;
 		}	
 		rdev = (major << 8) + minor;
@@ -132,7 +144,9 @@ int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 			case 'c' : mode |= S_IFCHR; break;
 			case 'b' : mode |= S_IFBLK; break;
 			default:
-				fprintf(stderr, "Bad mode (%c) in %s, line %d\n", type, pathdev, ln);
+				fprintf(stderr, "Bad mode (%c) in %s, line %d\n",
+					type, pathdev, ln);
+				free(line_buf);
 				return -1;
 		}
 		if (verbose)
@@ -141,5 +155,6 @@ int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 		special_inode(fs, e2dir, fname, rdev, mode, 0);
 		fname[0] = '\0';
 	}
+	free(line_buf);
 	return 0;
 }				

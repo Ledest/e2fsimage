@@ -43,10 +43,9 @@ l l.
 .TE
 .LP
 At least the last command must be executed as root.
-All files must be copied and created in this filesystem image as root
-that shall belong to an other user than root
-in order to set the different owners (usually root) and to create
-the special files.
+All files must be copied and created in this filesystem image as root. 
+In order to set the different owners (usually root) and to create
+the special files root permissions are still needed.
 Since all this results in a file that may belong to a
 ordinary user, this file can be created and filled with the fs
 structure by her. This application manages to
@@ -54,7 +53,9 @@ create such an image as ordinary user w/o
 .I sudo
 or 
 .I suid root
-bit set.  
+bit set. Also suid-root programs are possible by making them suid-user.
+When this file is copied the user is set to root and you have your suid-root
+program.  
 
 .LP
 e2fsimage iterates over the directory structure supplied in 
@@ -139,7 +140,7 @@ Usually the devices are created using
 by root. Obviously this would absurd the existence of 
 .B e2fsimage
 to be a non-root tool. A device special file called
-.B ._DEVICES_.
+.B .DEVICES
 can be placed in every directory (usually 
 .I dev
 ) that will contain device special files. The format of this file is:
@@ -166,7 +167,7 @@ The access mode for the file like 0644
 A call to mknod like 
 .B mknod -m 0600 ttyS1 4 65
 would result in a line in
-.B dev/._DEVICES_. 
+.B dev/.DEVICES 
 as "ttyS1 4 65 0600"
 
 .SH BUGS
