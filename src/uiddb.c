@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uiddb.c,v 1.2 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: uiddb.c,v 1.3 2004/03/15 21:11:48 chris2511 Exp $ 
  *
  */                           
 
@@ -75,8 +75,8 @@ int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 	 * the needed size of the whole thing:
 	 * the structure + the length of the filename
 	 */
-	namelen = strnlen(name, 79);
-	needed_size = sizeof(struct uidentry) + (namelen * sizeof(char));
+	namelen = strnlen(name, 79) * sizeof(char);
+	needed_size = sizeof(struct uidentry) + namelen;
 	/* 
 	 * first look if the available place is sufficent
 	 * end resize it if not
@@ -103,30 +103,33 @@ int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 	 * Warning: Pointer arith. ! 
 	 */
 	nameptr = (char *)(new + 1);
-	memcpy(nameptr, name, namelen * sizeof(char)); 
+	memcpy(nameptr, name, namelen); 
 	
 	db->size += needed_size;
-	printf("new:%p, namep:%p, size:%d, first:%p, structs:%d soc:%d\n",
-		  new, new+1, db->size, db->first, sizeof(struct uidentry), sizeof(char));
 	return 0;
 }
 
-static struct uidentry *next_ptr(struct uidentry *ptr) {
-	return (struct uidentry *)((unsigned char *)ptr  + sizeof(struct uidentry) + ptr->namelen*sizeof(char));
-}
 
 /*
  * iterates over the uidentry stack and searches for the supplied filename.
- * Returns the uidentry or 0 if it was not found.
+ * Returns 0 if it was not found and if it was found.
  */
 int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid)
 {
 	struct uidentry *ptr;
+	
 	if (!db->first) return 0;
-	for (ptr = db->first; (unsigned char *)ptr - (unsigned char *)db->first < db->size; ptr = next_ptr(ptr)) {
+	
+	for (ptr = db->first;
+		((unsigned char *)ptr - (unsigned char *)db->first) < db->size;
+	   	ptr = (struct uidentry *)((unsigned char *)(ptr+1) + ptr->namelen) )
+   	{
+		/* fast check for the sake of speed */
+		if (ptr->namelen != strnlen(name, 79) ) continue;
 		if (memcmp(name, ptr+1, ptr->namelen) == 0) {
 			*uid = ptr->uid;
 			*gid = ptr->gid;
+			printf("FOUND %s\n", name);
 			return 1;
 		}
 	}
