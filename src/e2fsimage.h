@@ -35,15 +35,21 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.1 2004/01/13 23:02:53 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.2 2004/01/13 23:53:25 chris2511 Exp $ 
  *
  */                           
 
 #include <e2p/e2p.h>
 #include <ext2fs/ext2fs.h>
 
+#ifndef E2FSIMAGE_H
+#define E2FSIMAGE_H
+
 extern int default_uid;
 extern int default_gid;
+extern int verbose;
 
 int init_fs(ext2_filsys *fs, char *fsname, int size);
 int copy_file(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
+
+#endif

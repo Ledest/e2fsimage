@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.2 2004/01/13 23:53:25 chris2511 Exp $ 
+ * $Id: symlink.c,v 1.1 2004/01/13 23:53:25 chris2511 Exp $ 
  *
  */                           
 
@@ -45,29 +45,29 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#define BUF_SIZE 4096
 
-int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile) 
+#define BUF_SIZE 256
+
+int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink) 
 {
 	
 	ext2_file_t e2file;
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
-	int ret, b_read, b_wrote;
-	char *ptr, *ptr1;
+	int ret, written;
+	char buf[BUF_SIZE];
 	const char *fname;
 	off_t size = 0;
 	struct stat s;
-	FILE *fp;
 	
 	/* 'stat' the file we want to copy */
-	ret = lstat(pathfile, &s);
+	ret = lstat(pathlink, &s);
 	if(ret) {
-		fprintf(stderr, "Could not 'stat' %s: %s\n", pathfile, strerror(errno));
+		fprintf(stderr, "Could not 'stat' %s: %s\n", pathlink, strerror(errno));
 		return -1;
 	}
-	if (!S_ISREG(s.st_mode)) {
-		fprintf(stderr, "File '%s' is not a regular file\n", pathfile);
+	if (!S_ISLNK(s.st_mode)) {
+		fprintf(stderr, "File '%s' is not a symlink file\n", pathlink);
 		return -1;
 	}
 	/* do the root squash */
@@ -77,7 +77,7 @@ int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 	/* create a new inode for this file */
 	ret = ext2fs_new_inode(fs, e2dir, s.st_mode, 0, &e2ino);
 	if (ret) {
-		fprintf(stderr, "Could not create new inode for %s\n", pathfile);
+		fprintf(stderr, "Could not create new inode for %s\n", pathlink);
 		return -1;
 	}
 	
@@ -108,65 +108,46 @@ int copy_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 	}
 
 	/* open the source file */
-	fp = fopen(pathfile, "r");
-	if (!fp) { /* unlikely, cause we stated it just some msec before... */
-		fprintf(stderr, "Error opening '%s': %s\n", pathfile, strerror(errno));
+	size = readlink(pathlink, buf, BUF_SIZE);
+	if (size < 0 || size >= BUF_SIZE) {
+		fprintf(stderr, "Error reading symlink '%s': %s\n", pathlink, strerror(errno));
 		return -1;
 	}
 	
 	if (verbose)
-		printf("Copying %s\n",pathfile);
-
-	/* read the input data and write it to the e2 file */
-	ptr = (char *)malloc(BUF_SIZE);
-	while ((b_read = fread(ptr, 1, BUF_SIZE, fp)) > 0) {
-		ptr1 = ptr;
-		while (b_read > 0) {
-			ret = ext2fs_file_write(e2file, ptr1, b_read, &b_wrote);
-			if (ret) {
-				fprintf(stderr, "Error writing ext2 file (%s)\n", error_message(ret));
-				ext2fs_file_close(e2file);
-				free(ptr);
-				fclose(fp);
-				return ret;
-			}
-			b_read -= b_wrote;
-			size += b_wrote;
-			ptr1 += b_wrote;
-		}
+		printf("Copying symlink %s\n",pathlink);
+	
+	ret = ext2fs_file_write(e2file, buf, size, &written);
+	if (ret) {
+		fprintf(stderr, "Error writing ext2 symlink (%s)\n", error_message(ret));
+		ext2fs_file_close(e2file);
+		return ret;
 	}
 
-	free(ptr);
-	fclose(fp);
 	ext2fs_file_close(e2file);
 	
-	/* post system check */
-	if (b_read < 0) {
-		fprintf(stderr, "Error reading '%s': %s\n", pathfile, strerror(errno));
-		return -1;
-	}
-
 	/* if this sizes differ its an inconsistency in the base filesystem */
-	if (s.st_size != size) {
-		fprintf(stderr, "Error 'size matters' Inode:%ld, File:%ld\n", s.st_size, size);
+	if (size != written) {
+		fprintf(stderr, "Error 'size matters' Size:%ld, Written:%d\n", size, written);
 		return -1;
 	}
+	
 	/* extract the filename from the path */
-	fname = strrchr(pathfile,'/');
+	fname = strrchr(pathlink,'/');
 	if (!fname){
-		fname = pathfile;
+		fname = pathlink;
 	}
 	else {
 		fname++;
 	}
-	/* now ptr points to the basename of 'pathfile' */
+	/* now ptr points to the basename of 'pathlink' */
 	
 	/* It is time to link the inode into the directory */
-	ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+	ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_SYMLINK);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {
 		/* resize the directory */
 		if (ext2fs_expand_dir(fs, e2dir) == 0)
-			ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+			ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_SYMLINK);
 	}			  
 	if (ret) {
 		fprintf(stderr, "e2-link error: %s\n", error_message(ret));

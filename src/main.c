@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.1 2004/01/13 23:02:53 chris2511 Exp $ 
+ * $Id: main.c,v 1.2 2004/01/13 23:53:25 chris2511 Exp $ 
  *
  */                           
 
@@ -43,6 +43,7 @@
 
 int default_uid = 0;
 int default_gid = 0;
+int verbose = 1;
 
 int main(int argc, char *argv[] )
 {
@@ -57,7 +58,8 @@ int main(int argc, char *argv[] )
 	if (ret)
 		fprintf(stderr, "Error creating dir\n");
 	
-	copy_file(fs, EXT2_ROOT_INO, "src/e2fsimage");
+	copy_file(fs, EXT2_ROOT_INO, "src/e2fsimage.h");
+	e2symlink(fs, EXT2_ROOT_INO, "src/lnk2e2fsimage.h");
 		
 	ext2fs_flush(fs);
 
