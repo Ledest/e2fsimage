@@ -79,6 +79,14 @@ and
 option respectively
 
 .TP
+.BI \-D\  devicefile
+The devicefile does contain all special devices to be created, see
+.I DEVICES
+.br
+. The default filename is 
+.B .DEVICES
+
+.TP
 .BI \-f\  imgfile
 This is the target file for the filesystem image. An existing file will be overwritten as long as 
 .B \-n

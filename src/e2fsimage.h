@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.8 2004/01/27 15:34:12 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.9 2004/01/27 23:24:16 chris2511 Exp $ 
  *
  */                           
 
@@ -92,5 +92,6 @@ extern int default_uid;
 extern int default_gid;
 extern int verbose;
 extern int preserve_uidgid;
+extern const char *dev_file;
 
 #endif

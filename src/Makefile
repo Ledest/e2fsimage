@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.8 2004/01/27 15:34:11 chris2511 Exp $
+# $Id: Makefile,v 1.9 2004/01/27 23:24:16 chris2511 Exp $
 #
 ######################################################################
 
@@ -19,7 +19,7 @@ e2fsimage: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 %.o: %.c
-	$(CC) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJS) e2fsimage

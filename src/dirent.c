@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.6 2004/01/27 16:48:25 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.7 2004/01/27 23:24:16 chris2511 Exp $ 
  *
  */                           
 
@@ -78,7 +78,7 @@ int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
 			free(namelist[i]);
 			if (!strncmp(".", ppath, 2)) continue ;
 			if (!strncmp("..", ppath, 3)) continue ;
-			if (!strncmp("._DEVICES_.", ppath, 12)) {
+			if (!strncmp(dev_file, ppath, strlen(dev_file))) {
 				ret = read_special_file(fs, e2dir, path);
 				if (ret) return ret;
 				continue;
@@ -90,45 +90,55 @@ int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
     }
 	return 0;
 }
+
+static int e2check_hardlink(ext2_filsys fs, ext2_ino_t e2dir,
+	const char *path, ino_t ino)
+{
+	const char *fname;
+	struct ext2_inode inode;
+	ext2_ino_t e2ino;
+	int ret;
+	
+	e2ino = inodb_search(ino_db, ino);
+	if (e2ino == 0) return 1;
+
+	/* hard link */
+	ret = ext2fs_read_inode(fs, e2ino, &inode);
+	E2_ERR(ret, "Ext2 read Inode Error", "");
+		
+	inode.i_links_count++;
+	
+	ret = ext2fs_write_inode(fs, e2ino, &inode);
+	E2_ERR(ret, "Ext2 write Inode Error", "");
+				 
+	if (verbose)
+		printf("Creating hard link %s\n", path);
+
+	fname = basename(path);
+		
+	/* It is time to link the inode into the directory */
+	ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+	if (ret == EXT2_ET_DIR_NO_SPACE) {
+		/* resize the directory */
+		if (ext2fs_expand_dir(fs, e2dir) == 0)
+			ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+	}			  
+	E2_ERR(ret, "Ext2 Link Error", fname);
+		
+	return 0;
+		
+}
 	   
 int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path)
 {
 	struct stat s;  
-	ext2_ino_t newe2dir, e2ino;
-	struct ext2_inode inode;
+	ext2_ino_t newe2dir;
 	int ret;
-	const char *fname;
 	
 	lstat(path, &s);
 	
-	e2ino = inodb_search(ino_db, s.st_ino);
-	if (e2ino != 0) {
-		/* hard link */
-		ret = ext2fs_read_inode(fs, e2ino, &inode);
-		E2_ERR(ret, "Ext2 read Inode Error", "");
-		
-		inode.i_links_count++;
-		
-		ret = ext2fs_write_inode(fs, e2ino, &inode);
-		E2_ERR(ret, "Ext2 write Inode Error", "");
-				 
-		if (verbose)
-			printf("Creating hard link %s\n", path);
-
-		fname = basename(path);
-		
-		/* It is time to link the inode into the directory */
-		ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
-		if (ret == EXT2_ET_DIR_NO_SPACE) {
-			/* resize the directory */
-			if (ext2fs_expand_dir(fs, e2dir) == 0)
-				ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
-		}			  
-		E2_ERR(ret, "Ext2 Link Error", fname);
-		
-		return 0;
-		
-	}
+	ret = e2check_hardlink(fs, e2dir, path, s.st_ino);
+	if (ret <= 0) return ret;
 	
 	if (S_ISDIR(s.st_mode)) {
 		ret = e2mkdir(fs, e2dir, path, &newe2dir);
@@ -150,3 +160,4 @@ int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path)
 	}
 	return 0;
 }	
+

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.3 2004/01/27 15:34:12 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.4 2004/01/27 23:24:16 chris2511 Exp $ 
  *
  */                           
 
@@ -101,6 +101,8 @@ int e2mknod(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
 		fprintf(stderr, "File '%s' is not a block or charspecial device\n", pathfile);
 		return -1;
 	}
+	if (verbose)
+		printf("Creating special file: %s\n", pathfile);
 	
 	return special_inode(fs, e2dir, basename(pathfile), s.st_rdev, s.st_mode, s.st_ino);
 }
