@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.12 2004/03/06 17:13:04 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.13 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -87,7 +87,7 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname, struct stat *s)
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
 	
-	e2c->cnt.specf++;
+	e2c->cnt->specf++;
 	
 	/* It is time to link the inode into the directory */
 	return e2link(e2c, fname, e2ino, e2mod);
@@ -171,6 +171,7 @@ int read_special_file(e2i_ctx_t *e2c)
 				fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
 					e2c->curr_path, ln, fname);
 				free(line_buf);
+				fclose(fp);
 				return -1;
 		}
 		
@@ -185,6 +186,7 @@ int read_special_file(e2i_ctx_t *e2c)
 				fprintf(stderr, "Bad mode (%c) in %s, line %d\n",
 					type, e2c->curr_path, ln);
 				free(line_buf);
+				fclose(fp);
 				return -1;
 		}
 		
@@ -196,7 +198,8 @@ int read_special_file(e2i_ctx_t *e2c)
 		special_inode(e2c, fname, &s);
 		fname[0] = '\0';
 	}
-	free(line_buf);
 	e2c->preserve_uidgid = pug_tmp;
+	free(line_buf);
+	fclose(fp);
 	return 0;
 }				

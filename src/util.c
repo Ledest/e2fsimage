@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: util.c,v 1.6 2004/02/21 16:57:09 chris2511 Exp $ 
+ * $Id: util.c,v 1.7 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -81,7 +81,9 @@ void init_inode(e2i_ctx_t *e2c, struct ext2_inode *i, struct stat *s)
 int e2link(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino, int mode)
 {
 	int ret;
-			
+
+	modinode(e2c, fname, e2ino);
+	
 	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, mode);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {
 		/* resize the directory */

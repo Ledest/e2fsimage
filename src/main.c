@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.19 2004/02/21 16:57:09 chris2511 Exp $ 
+ * $Id: main.c,v 1.20 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -64,6 +64,7 @@ int main(int argc, char *argv[] )
 	int ret = 0, c, create=1, ksize=4096;
 	char *e2fsfile = NULL;
 	e2i_ctx_t e2c;
+	struct cnt_t cnt;
 	
 	/* initialize ext2fs error table */
 	init_ext2_err_tbl();
@@ -72,8 +73,10 @@ int main(int argc, char *argv[] )
 	memset(&e2c, 0, sizeof(e2c));
 	
 	e2c.dev_file = ".DEVICES";
+	e2c.uid_file = ".UIDGID";
 	e2c.curr_path = NULL;
-	
+	e2c.cnt = &cnt;
+
 	printf("%s - Version: %s\n",  argv[0], VER);
 	
 	/* handle arguments and options */
@@ -137,10 +140,10 @@ int main(int argc, char *argv[] )
 	/* satisfy the user with some statistics */
 	printf("Copied %d Directorys, %d regular files, %d symlinks\n"
 			"%d hard links and %d special files - total %d\n",
-			e2c.cnt.dir, e2c.cnt.regf, e2c.cnt.softln, 
-			e2c.cnt.hardln, e2c.cnt.specf, 
-			e2c.cnt.dir+ e2c.cnt.regf+ e2c.cnt.softln+ 
-			e2c.cnt.hardln+ e2c.cnt.specf); 
+			e2c.cnt->dir, e2c.cnt->regf, e2c.cnt->softln, 
+			e2c.cnt->hardln, e2c.cnt->specf, 
+			e2c.cnt->dir+ e2c.cnt->regf+ e2c.cnt->softln+ 
+			e2c.cnt->hardln+ e2c.cnt->specf); 
 
 	return ret;
 }

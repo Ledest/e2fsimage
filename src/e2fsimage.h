@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.16 2004/03/11 22:42:59 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.17 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -69,10 +69,9 @@ typedef struct {
 
 /* uid db */
 struct uidentry {
-	char *name;
 	int uid;
 	int gid;
-	struct uidentry *next;
+	int namelen;
 };
 
 typedef struct {
@@ -82,20 +81,25 @@ typedef struct {
 } uiddb_t;
 
 /* global filesystem information */
+
+struct cnt_t {
+	int dir, regf, specf, hardln, softln;
+};
+
 typedef struct {
     ext2_filsys fs;
     ext2_ino_t curr_e2dir;
     const char *curr_path;
 
     inodb_t *ino_db;
+	uiddb_t *uid_db;
     int default_uid;
     int default_gid;
     int verbose;
     int preserve_uidgid;
     const char *dev_file;
-	struct {
-		int dir, regf, specf, hardln, softln;
-	} cnt;
+    const char *uid_file;
+	struct cnt_t *cnt;
 } e2i_ctx_t;
 
 int mke2fs(const char *fname, int size);
@@ -122,5 +126,13 @@ int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2);
 ext2_ino_t inodb_search(inodb_t *db, ino_t ino1);
 void inodb_free(inodb_t *db);
 
+/* uid database functions */
+int uiddb_init(uiddb_t *db);
+int uiddb_add(uiddb_t *db, const char* name, int uid, int gid);
+int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid);
+void uiddb_free(uiddb_t *db);
+
+int read_uids(e2i_ctx_t *e2c, uiddb_t *db);
+int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino);
 
 #endif

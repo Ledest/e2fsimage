@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.16 2004/03/11 22:42:59 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.17 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -50,59 +50,64 @@
  * Scan a directory and copy all the files to the e2c->curr_e2dir
  * using scandir()
  */
-int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
+int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 {
 	struct dirent **namelist;
 	int i,ret, len, count;
 	char path[256], *ppath;
-	ext2_ino_t olddir;
+	uiddb_t uiddb;
+	e2i_ctx_t e2c;
 	
-	ret = scandir(e2c->curr_path, &namelist, 0, 0);
+	memcpy(&e2c, e2c_old, sizeof(e2i_ctx_t));
+	e2c.curr_e2dir = newdir;
+
+	ret = scandir(e2c.curr_path, &namelist, 0, 0);
 	if (ret < 0) {
 		perror("scandir");
 		return -1;
 	}
 
 	/* prepare the new pathname in path[] */
-	len = strlen(e2c->curr_path);
-	strncpy(path, e2c->curr_path, 256);
+	len = strlen(e2c.curr_path);
+	strncpy(path, e2c.curr_path, 256);
 	if (path[len-1] != '/') {
 		path[len++] = '/';
 	}
+	e2c.curr_path = path;
 	ppath = path + len;
 	count = ret;
 	ret = 0;
 
-	/*
-	 * set the current e2dir to newdir 
-	 * and remember the old one
-	 */
-	olddir = e2c->curr_e2dir;
-	e2c->curr_e2dir = newdir;
+	/* setup the uid database */
+	uiddb_init(&uiddb);
+	read_uids(&e2c, &uiddb);
+	e2c.uid_db = &uiddb;
+
+	/* check for . entry in .UIDGID */
+	if (uiddb_search(&uiddb, ".", &e2c.default_uid, &e2c.default_gid)){
+		e2c.preserve_uidgid = 0;
+	}
+	modinode(&e2c, ".", newdir);
+	
 	
 	/* iterate over all directory items */
 	for (i = 0; i<count; i++) {
 		strncpy(ppath, namelist[i]->d_name, 256 - len);
 		free(namelist[i]);
 		/* skip . and .. */
-		if (!strncmp(".", ppath, 2)) continue ;
-		if (!strncmp("..", ppath, 3)) continue ;
-		/* we must set this again and again because 
-		 * calls to e2filetype_select() will repoint it*/
-		e2c->curr_path = path;
+		if (!strncmp(".", ppath, 2)) continue;
+		if (!strncmp("..", ppath, 3)) continue;
+		if (!strncmp(e2c.uid_file, ppath, strlen(e2c.uid_file))) continue;
 		/* is there a special file (.DEVICES) */
-		if (!strncmp(e2c->dev_file, ppath, strlen(e2c->dev_file))) {
-			ret = read_special_file(e2c);
+		if (!strncmp(e2c.dev_file, ppath, strlen(e2c.dev_file))) {
+			ret = read_special_file(&e2c);
 			if (ret) break;
 			continue;
 		}
 		/* select the action depending on the filetype */
-		ret = e2filetype_select(e2c);
+		ret = e2filetype_select(&e2c);
 		if (ret) break;
 	}
-	
-	/* recover the old directory inode */
-	e2c->curr_e2dir = olddir;
 	
 	/* 
 	 * in case of an error iterate over the remaining 
@@ -138,7 +143,7 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 	if (e2c->verbose)
 		printf("Creating hard link %s\n", e2c->curr_path);
 	
-	e2c->cnt.hardln++;
+	e2c->cnt->hardln++;
 		
 	/* resolve the filetype from i_mode */
 	e2mod = mode2filetype(inode.i_mode);
@@ -154,7 +159,7 @@ int e2filetype_select(e2i_ctx_t *e2c)
 	int ret;
 	
 	lstat(e2c->curr_path, &s);
-	
+
 	ret = e2check_hardlink(e2c, s.st_ino);
 	if (ret <= 0) return ret;
 	ret = -1;

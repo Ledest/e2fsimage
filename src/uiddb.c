@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uiddb.c,v 1.1 2004/03/11 22:42:59 chris2511 Exp $ 
+ * $Id: uiddb.c,v 1.2 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -68,13 +68,15 @@ int uiddb_init(uiddb_t *db)
  */
 int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 {
-	int needed_size;
-	struct uidentry *last, *new;
+	int needed_size, namelen;
+	struct uidentry *new;
+	char *nameptr;
 	/* 
 	 * the needed size of the whole thing:
 	 * the structure + the length of the filename
 	 */
-	needed_size = sizeof(struct uidentry) + strnlen(name, 79) + 1;
+	namelen = strnlen(name, 79);
+	needed_size = sizeof(struct uidentry) + (namelen * sizeof(char));
 	/* 
 	 * first look if the available place is sufficent
 	 * end resize it if not
@@ -95,38 +97,37 @@ int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 	new = (struct uidentry *)(((unsigned char *)db->first) + db->size);
 	new->uid = uid;
 	new->gid = gid;
-	new->next = NULL;
+	new->namelen = namelen;
 	/*
 	 * the name begins after the uidentry struct 
 	 * Warning: Pointer arith. ! 
 	 */
-	new->name = (char *)(uid+1);
-	strncpy(new->name, name, 79); 
-
-	/* find last entry */
-	last = db->first;
-	while(last->next) last = last->next;
-	/* 
-	 * let the last point to the new one
-	 * if it is not the same (first entry)
-	 */
-	if (last != new) 
-		last->next = new;
+	nameptr = (char *)(new + 1);
+	memcpy(nameptr, name, namelen * sizeof(char)); 
 	
 	db->size += needed_size;
+	printf("new:%p, namep:%p, size:%d, first:%p, structs:%d soc:%d\n",
+		  new, new+1, db->size, db->first, sizeof(struct uidentry), sizeof(char));
 	return 0;
+}
+
+static struct uidentry *next_ptr(struct uidentry *ptr) {
+	return (struct uidentry *)((unsigned char *)ptr  + sizeof(struct uidentry) + ptr->namelen*sizeof(char));
 }
 
 /*
  * iterates over the uidentry stack and searches for the supplied filename.
  * Returns the uidentry or 0 if it was not found.
  */
-struct uidentry *uiddb_search(uiddb_t *db, const char *name)
+int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid)
 {
 	struct uidentry *ptr;
-	for (ptr = db->first; ptr != NULL; ptr = ptr->next) {
-		if (strncmp(name, ptr->name, 79) == 0) {
-			return ptr;
+	if (!db->first) return 0;
+	for (ptr = db->first; (unsigned char *)ptr - (unsigned char *)db->first < db->size; ptr = next_ptr(ptr)) {
+		if (memcmp(name, ptr+1, ptr->namelen) == 0) {
+			*uid = ptr->uid;
+			*gid = ptr->gid;
+			return 1;
 		}
 	}
 	return 0;

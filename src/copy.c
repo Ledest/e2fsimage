@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.10 2004/02/03 23:22:30 chris2511 Exp $ 
+ * $Id: copy.c,v 1.11 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -123,7 +123,7 @@ int e2cp(e2i_ctx_t *e2c)
 	if (e2c->verbose)
 		printf("Copying file %s\n", e2c->curr_path);
 	
-	e2c->cnt.regf++;
+	e2c->cnt->regf++;
 	
 	ret = inodb_add(e2c->ino_db, s.st_ino, e2ino);
 	if (ret) return -1;

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mkdir.c,v 1.6 2004/01/29 16:06:16 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.7 2004/03/12 14:20:17 chris2511 Exp $ 
  *
  */                           
 
@@ -53,6 +53,7 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	int ret;
 	struct stat s;
 	const char *dname;
+	ext2_ino_t nd;
 	
 	ret = lstat(e2c->curr_path, &s);
 	ERRNO_ERR(ret,"Could not 'stat': ", e2c->curr_path);
@@ -78,12 +79,16 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	if (e2c->verbose)
 		printf ("Creating directory %s\n", dname);
 
-	e2c->cnt.dir++;
+	e2c->cnt->dir++;
 	
 	/* lookup the inode of the new directory if requested */
+	ret = ext2fs_lookup(e2c->fs, e2c->curr_e2dir, dname, strlen(dname), 0, &nd);
+	E2_ERR(ret, "Could not Ext2-lookup: ", dname);
+	
+	modinode(e2c, dname, nd);
+	
 	if (newdir) {
-		ret = ext2fs_lookup(e2c->fs, e2c->curr_e2dir, dname, strlen(dname), 0, newdir);
-		E2_ERR(ret, "Could not Ext2-lookup: ", dname);
+		*newdir = nd;
 	}
 	return 0;
 }
