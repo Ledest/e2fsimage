@@ -2,7 +2,7 @@ Source: e2fsimage
 Section: admin
 Priority: optional
 Maintainer: Christian Hohnstädt <christian@hohnstaedt.de>
-Build-Depends: debhelper (>> 3.0.0) e2fslibs-dev (>= 1.27-2)
+Build-Depends: debhelper (>> 3.0.0), e2fslibs-dev (>= 1.27-2)
 Standards-Version: 3.5.2
 
 Package: e2fsimage
