@@ -1,7 +1,7 @@
 #
 # vi: set sw=4 ts=4: 
 #
-# $Id: Makefile,v 1.7 2004/03/01 22:08:29 chris2511 Exp $
+# $Id: Makefile,v 1.8 2004/03/02 08:32:32 chris2511 Exp $
 #
 ######################################################################
 
@@ -24,7 +24,7 @@ distclean: clean
 	rm -f Local.mak
 
 TAG=$(shell echo "VERSION.$(TVERSION)" |sed "s/\./_/g" )
-TARGET=e2fsimage-$(TVERSION)
+TARGET=e2fsimage-$(shell echo "$(TVERSION)" |sed "s/\-.*//")
 
 dist: 
 	test ! -z "$(TVERSION)"
