@@ -14,7 +14,7 @@ e2fsimage \- create and populate an ext2 filesystem image as non-root user
 ] [
 .I -s size
 ] [
-.I -D device filename
+.I -D file
 ] [
 .I -p
 ] [
@@ -26,9 +26,20 @@ e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .LP
 .B e2fsimage
 creates an ext2 filesystem by recursively copying the files from 
-an existing directory structure.
+the existing directory structure
+.I rootdir
+.
+.br
 Supported filetypes are: regular files, directorys, hard-links
-, soft-links, block special devices and character special devices. 
+, soft-links, block special devices and character special devices 
+and of course hidden files.
+Hard links are resolved to result in hard links in the image.
+Softlinks are copied as they are and not resolved or altered. In the 
+.I rootdir
+/home/user/build/rootdir a link to the file "file" should link to "->/file"
+if the image is used as root filesystem or to "->file if used elsewhere
+but not to "->/home/user/build/rootdir/file" since this
+will most likely result into a broken link.
 
 .LP
 The usual way to create ext2 filesystem images for initial ramdisks,
@@ -40,33 +51,25 @@ l l.
 1@ dd if=/dev/zero of=e2img bs=1024 count=4096
 2@ mke2fs -F e2img
 3@ mount -o loop e2img mounpoint
+4@ cp -r rootdir/* mountpoint
 .TE
 .LP
 At least the last command must be executed as root.
-All files must be copied and created in this filesystem image as root. 
-In order to set the different owners (usually root) and to create
-the special files root permissions are still needed.
-Since all this results in a file that may belong to a
+In order to set the different ownerships (usually root) and to create
+the special device files root permissions are also needed.
+.LP
+Since all this results in a file that may belong to an 
 ordinary user, this file can be created and filled with the fs
 structure by her. This application manages to
-create such an image as ordinary user w/o 
+create such an image as ordinary user without
 .I sudo
 or 
 .I suid root
-bit set. Also suid-root programs are possible by making them suid-user.
-When this file is copied the user is set to root and you have your suid-root
-program.  
-
-.LP
-e2fsimage iterates over the directory structure supplied in 
-.I rootdir 
-and writes every file, link and directory to the e2fs image in
-.I fsimage
-including all hidden files. Hard links are resolved to result in hard links in the image. softlinks are copied as they are and not resolved or altered. In the 
-.I rootdir
-/home/user/build/rootdir a link to the file "file" should link to "->/file"
-if the image is used as root filesystem or to "->file if used elsewhere
-but not to "->/home/user/build/rootdir/file".
+bit set. 
+Of course suid-root programs in the filesystem image are possible 
+by making them suid-user.
+When this files are copied, the user is set to root and there you
+have your suid-root program.  
 
 .SH OPTIONS
 
