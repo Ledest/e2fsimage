@@ -1,0 +1,35 @@
+Build and installation instructions for "e2fsimage"
+
+Prerequisites e2fsprogs:
+------------------------
+The "e2fsprogs" are needed in its development version.
+
+rpm users install "e2fsprogs-devel" and
+debian users use "e2fsprogs-dev"
+
+it can also be built from scratch and should be configured with:
+./configure --enable-elf-shlibs
+make
+make install
+
+
+configuration:
+--------------
+a small configuration script configures the package.
+
+installation prefix and CFLAGS can be preceeded:
+prefix=/usr/special/install CFLAGS="-Wall -g" ./configure
+
+Directorys containing headerfiles and libs can be given as arguments
+like: /home/user/src/e2fsprogs-1.34 if you installed e2fsprogs
+from source:
+
+./configure /home/user/src/e2fsprogs-1.34
+
+
+
+build the package with:
+make
+
+and install it with:
+make install
