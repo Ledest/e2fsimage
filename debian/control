@@ -1,0 +1,14 @@
+Source: e2fsimage
+Section: admin
+Priority: optional
+Maintainer: Christian Hohnstädt <christian@hohnstaedt.de>
+Build-Depends: debhelper (>> 3.0.0) e2fslibs-dev (>= 1.27-2)
+Standards-Version: 3.5.2
+
+Package: e2fsimage
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Tool for creating an ext2 filesystem as non-root user
+   This tool enables the user to create an ext2 filesystem as
+   copy of an existing directory tree like mkcramfs, mkfs.jffs2
+   or others for initial ramdisks or bootdisks.

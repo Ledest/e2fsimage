@@ -1,0 +1,13 @@
+e2fsimage (0.1.2) unstable; urgency=low
+
+  * support for block and character special devices
+  * hard links to other than regular files supported now
+
+ -- Christian Hohnstädt <chris@trinity.local>  Tue, 27 Jan 2004 20:16:51 +0100
+
+e2fsimage (0.1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Christian Hohnstädt <christian@hohnstaedt.de>  Mon, 26 Jan 2004 21:13:04 +0100
+
