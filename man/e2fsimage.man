@@ -129,6 +129,11 @@ can be placed in every directory (usually
 ) that will contain device special files. The format of this file is:
 .LP
 .I <name> <type> <major> <minor> <mode>
+[
+.I <uid> 
+[
+.I <gid>
+]]
 .TP
 .B name
 the name of the file like 
@@ -148,6 +153,12 @@ This are the major and minor numbers of the device
 .TP
 .B mode
 The access mode for the file like 0644
+.TP
+.BI uid
+The uid of the device.
+.TP
+.BI gid
+The gid of the device.
 .LP
 A call to mknod like 
 .B mknod -m 0600 ttyS1 c 4 65

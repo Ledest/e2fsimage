@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.10 2004/02/03 23:22:30 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.11 2004/03/04 16:13:20 chris2511 Exp $ 
  *
  */                           
 
@@ -131,7 +131,7 @@ int read_special_file(e2i_ctx_t *e2c)
 {
 	FILE *fp;
 	char fname[80], *line_buf, type;
-	int n, major, minor, mode, ln=0;
+	int n, major, minor, mode, ln=0, uid, gid;
 	dev_t rdev;
 	struct stat s;
 	
@@ -156,18 +156,32 @@ int read_special_file(e2i_ctx_t *e2c)
 			continue;
 		}
 		
-		n = sscanf(line_buf, "%79s %c %d %d %o",
-			fname, &type, &major, &minor, &mode);
+		s.st_uid = s.st_gid = 0;
+		
+		n = sscanf(line_buf, "%79s %c %d %d %o %d %d",
+			fname, &type, &major, &minor, &mode, &uid, &gid);
 		
 		if (line_buf[0] == '\n' || fname[0] == '#' ) continue;
 
 		/* sanity check */
-		if (n != 5) {
+		if (n < 5) {
 			fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
 				e2c->curr_path, ln, fname);
 			free(line_buf);
 			return -1;
 		}	
+		/* Did we receive only uid as parameter? */
+		else if (n == 6)
+		{
+			s.st_uid = uid;
+		}
+		/* Did we receive uid and gid as parameter? */
+		else if (n == 7)
+		{
+			s.st_uid = uid;
+			s.st_gid = gid;
+		}
+
 
 		rdev = (major << 8) + minor;
 		switch (type) {

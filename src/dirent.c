@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.13 2004/02/03 23:22:30 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.14 2004/03/04 16:13:20 chris2511 Exp $ 
  *
  */                           
 
@@ -53,7 +53,7 @@
 int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 {
 	struct dirent **namelist;
-	int i,ret, len, count;
+	int i,ret, len, count, preserve_uidgid_tmp;
 	char path[256], *ppath;
 	ext2_ino_t olddir;
 	
@@ -90,7 +90,12 @@ int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 		e2c->curr_path = path;
 		/* is there a special file (.DEVICES) */
 		if (!strncmp(e2c->dev_file, ppath, strlen(e2c->dev_file))) {
+
+			/* force to create devices with uid and gid from .DEVICES */
+			preserve_uidgid_tmp = e2c->preserve_uidgid;
+			e2c->preserve_uidgid = 1;
 			ret = read_special_file(e2c);
+			e2c->preserve_uidgid = preserve_uidgid_tmp;
 			if (ret) break;
 			continue;
 		}
