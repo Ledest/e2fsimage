@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.11 2004/03/04 16:13:20 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.12 2004/03/06 17:13:04 chris2511 Exp $ 
  *
  */                           
 
@@ -91,13 +91,6 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname, struct stat *s)
 	
 	/* It is time to link the inode into the directory */
 	return e2link(e2c, fname, e2ino, e2mod);
-	if (ret == EXT2_ET_DIR_NO_SPACE) {
-		/* resize the directory */
-		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)
-			ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, e2mod);
-	}			  
-	E2_ERR(ret, "Ext2 Link Error", fname);
-	return 0;	
 }
 
 /*
@@ -119,7 +112,7 @@ int e2mknod(e2i_ctx_t *e2c)
 		return -1;
 	}
 	if (e2c->verbose)
-		printf("Creating special file: %s\n", e2c->curr_path);
+		printf("Copying special file: %s\n", e2c->curr_path);
 
 	return special_inode(e2c, basename(e2c->curr_path), &s);
 }
@@ -131,9 +124,12 @@ int read_special_file(e2i_ctx_t *e2c)
 {
 	FILE *fp;
 	char fname[80], *line_buf, type;
-	int n, major, minor, mode, ln=0, uid, gid;
+	int n, major, minor, mode, ln=0, uid, gid, pug_tmp;
 	dev_t rdev;
 	struct stat s;
+
+	pug_tmp = e2c->preserve_uidgid;
+	e2c->preserve_uidgid = 1;
 	
 	fp = fopen(e2c->curr_path, "r");
 	ERRNO_ERR(!fp, "Failed to open: ", e2c->curr_path);
@@ -157,54 +153,50 @@ int read_special_file(e2i_ctx_t *e2c)
 		}
 		
 		s.st_uid = s.st_gid = 0;
+		s.st_mode = 0600;
 		
 		n = sscanf(line_buf, "%79s %c %d %d %o %d %d",
 			fname, &type, &major, &minor, &mode, &uid, &gid);
 		
+		/* check for comment lines */
 		if (line_buf[0] == '\n' || fname[0] == '#' ) continue;
 
-		/* sanity check */
-		if (n < 5) {
-			fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
-				e2c->curr_path, ln, fname);
-			free(line_buf);
-			return -1;
-		}	
-		/* Did we receive only uid as parameter? */
-		else if (n == 6)
-		{
-			s.st_uid = uid;
+		/* how much parameters were given ? */
+		switch (n) {
+			case 7 : s.st_gid = gid; /* uid gid and mode were given */
+			case 6 : s.st_uid = uid;
+			case 5 : s.st_mode = mode; /* mode was given */
+			case 4 : break;
+			default:
+				fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
+					e2c->curr_path, ln, fname);
+				free(line_buf);
+				return -1;
 		}
-		/* Did we receive uid and gid as parameter? */
-		else if (n == 7)
-		{
-			s.st_uid = uid;
-			s.st_gid = gid;
-		}
-
-
+		
 		rdev = (major << 8) + minor;
 		switch (type) {
-			case 'u':
-			case 'c' : mode |= S_IFCHR; break;
-			case 'b' : mode |= S_IFBLK; break;
+			case 'u' :
+			case 'c' : s.st_mode |= S_IFCHR; break;
+			case 'b' : s.st_mode |= S_IFBLK; break;
 			case 'p' : 
-			case 'f' : mode |= S_IFIFO; break;
+			case 'f' : s.st_mode |= S_IFIFO; break;
 			default:
 				fprintf(stderr, "Bad mode (%c) in %s, line %d\n",
 					type, e2c->curr_path, ln);
 				free(line_buf);
 				return -1;
 		}
+		
 		if (e2c->verbose)
 			printf("Creating special file: %s (%c, Major %d, Minor: %d)\n",
 					fname, type, major, minor);
 
-		s.st_mode = mode;
 		s.st_rdev = rdev;
 		special_inode(e2c, fname, &s);
 		fname[0] = '\0';
 	}
 	free(line_buf);
+	e2c->preserve_uidgid = pug_tmp;
 	return 0;
 }				

@@ -128,12 +128,8 @@ can be placed in every directory (usually
 .I dev
 ) that will contain device special files. The format of this file is:
 .LP
-.I <name> <type> <major> <minor> <mode>
-[
-.I <uid> 
-[
-.I <gid>
-]]
+.I <name> <type> <major> <minor> 
+.RI [ \ <mode>\  [ \ <uid>\  [ \ <gid>\  ]]]
 .TP
 .B name
 the name of the file like 
@@ -141,24 +137,27 @@ the name of the file like
 .TP
 .B type 
 Actually supported are
-.I c,\ u
+.IR c , u
 for character special devices,
 .I b
 for block special devices and
-.I p,\ f
+.IR p , f
 for fifos.
 .TP
 .BR major\ minor .
 This are the major and minor numbers of the device
 .TP
 .B mode
-The access mode for the file like 0644
+The access mode for the file like 0644. The default mode for
+devices is 0600 if 
+.I mode
+is omitted.
 .TP
 .BI uid
-The uid of the device.
+The uid of the device, 0 if omitted.
 .TP
 .BI gid
-The gid of the device.
+The gid of the device, 0 if omitted.
 .LP
 A call to mknod like 
 .B mknod -m 0600 ttyS1 c 4 65
