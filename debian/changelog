@@ -1,8 +1,14 @@
+e2fsimage (0.2.0-2) unstable; urgency=low
+
+  * remove CRLF from debian/copyright
+
+ -- Christian Hohnstaedt <christian@hohnstaedt.de>  Tue, 23 Mar 2004 23:56:23 +0100
+
 e2fsimage (0.2.0-1) unstable; urgency=low
 
   * see upstream changelog
 
- -- Christian Hohnstaedt <christian@hohnstaedt.de>  Tue, 23 Mar 2004 23:11:15 +0100
+ -- Christian Hohnstaedt <christian@hohnstaedt.de>  Tue, 23 Mar 2004 23:22:42 +0100
 
 e2fsimage (0.1.7-1) unstable; urgency=low
 
@@ -17,7 +23,7 @@ e2fsimage (0.1.6-1) unstable; urgency=low
 
  -- Christian Hohnstaedt <christian@hohnstaedt.de>  Mon,  1 Mar 2004 23:28:28 +0100
 
-e2fsimage (0.1.5) unstable; urgency=low
+e2fsimage (0.1.5-1) unstable; urgency=low
 
   * copyright added and lintian shown errors removed 
   * documentation updated
@@ -25,7 +31,7 @@ e2fsimage (0.1.5) unstable; urgency=low
 
  -- Christian Hohnstaedt <christian@hohnstaedt.de>  Sat, 21 Feb 2004 16:31:40 +0100
 
-e2fsimage (0.1.4) unstable; urgency=low
+e2fsimage (0.1.4-1) unstable; urgency=low
 
   * support for static linking against libext2fs.a
   * support for fifos
@@ -34,7 +40,7 @@ e2fsimage (0.1.4) unstable; urgency=low
 
  -- Christian Hohnstaedt <christian@hohnstaedt.de>  Wed, 18 Feb 2004 00:48:01 +0100
 
-e2fsimage (0.1.3) unstable; urgency=low
+e2fsimage (0.1.3-1) unstable; urgency=low
 
   * documentation updated
   * .DEVICES file parser improved
@@ -43,7 +49,7 @@ e2fsimage (0.1.3) unstable; urgency=low
 
  -- Christian Hohnstaedt <chris@hohnstaedt.de>  Mon,  2 Feb 2004 21:15:16 +0100
 
-e2fsimage (0.1.2) unstable; urgency=low
+e2fsimage (0.1.2-1) unstable; urgency=low
 
   * support for block and character special devices
   * hard links to other than regular files supported now
