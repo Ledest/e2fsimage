@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.20 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: main.c,v 1.21 2004/03/15 19:24:44 chris2511 Exp $ 
  *
  */                           
 
@@ -76,12 +76,13 @@ int main(int argc, char *argv[] )
 	e2c.uid_file = ".UIDGID";
 	e2c.curr_path = NULL;
 	e2c.cnt = &cnt;
-
+	cnt.dir = cnt.regf = cnt.softln = cnt.hardln = cnt.specf = 0; 
+		
 	printf("%s - Version: %s\n",  argv[0], VER);
 	
 	/* handle arguments and options */
 	do {
-		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:");
 		switch (c) {
 			case 'v': e2c.verbose = 1; break;
 			case 'p': e2c.preserve_uidgid = 1; break;
@@ -93,6 +94,7 @@ int main(int argc, char *argv[] )
 			case 'n': create = 0; break;
 			case 's': ksize = atoi(optarg); break;
 			case 'D': e2c.dev_file = optarg; break;
+			case 'U': e2c.uid_file = optarg; break;
 		}
 			 
 	} while (c >= 0);
@@ -140,10 +142,8 @@ int main(int argc, char *argv[] )
 	/* satisfy the user with some statistics */
 	printf("Copied %d Directorys, %d regular files, %d symlinks\n"
 			"%d hard links and %d special files - total %d\n",
-			e2c.cnt->dir, e2c.cnt->regf, e2c.cnt->softln, 
-			e2c.cnt->hardln, e2c.cnt->specf, 
-			e2c.cnt->dir+ e2c.cnt->regf+ e2c.cnt->softln+ 
-			e2c.cnt->hardln+ e2c.cnt->specf); 
+			cnt.dir, cnt.regf, cnt.softln, cnt.hardln, cnt.specf, 
+			cnt.dir+ cnt.regf+ cnt.softln+ cnt.hardln+ cnt.specf); 
 
 	return ret;
 }

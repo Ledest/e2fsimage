@@ -8,6 +8,7 @@ e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .RI [ -u\ uid ]
 .RI [ -g\ gid ]
 .RI [ -D\ file ]
+.RI [ -U\ file ]
 .RI [ -p ]
 .RI [ -v ]
 .RI [ -n ]
@@ -70,11 +71,19 @@ options respectively
 
 .TP
 .BI \-D\  devicefile
-The devicefile does contain all special devices to be created, see
+The devicefile contains all special devices to be created, see
 .IR DEVICES .
 .br
 The default filename is 
 .BR .DEVICES .
+
+.TP
+.BI \-U\  uidgidfile
+The uidgidfile contains the uids and gids different from 0, see
+.IR UIDs and GIDs .
+.br
+The default filename is 
+.BR .UIDGID .
 
 .TP
 .BI \-f\  imgfile
@@ -165,6 +174,30 @@ would result in a line in
 .B dev/.DEVICES 
 as "ttyS1 c 4 65 0600"
 
+.SH UIDs and GIDs
+.LP
+Every directory may contain a file named .UIDGID the name can be changed
+by the 
+.I -U
+option. The format of this file is:
+.LP
+.I <name> <uid> 
+.RI [ \ <gid> \ ]
+.LP
+If the <name> is "." then the owner and group information
+will be kept recursively for all files and directorys below.
+For a "chown 500 /home/user" you would write "user 500" to "home/.UIDGID and have
+such a directory "home/user" of course. A "chown -R 500 /home/user" one would write
+a ". 500" to "home/user/.UIDGID".
+.TP
+.B name
+is the name of the file.
+.TP
+.B uid 
+is the numeric userid of the file. Usernames are not supported.
+.TP
+.B gid 
+is the numeric groupid of the file. It will be zero if omitted. Groupnames are not supported, yet.
 .SH BUGS
 .LP
 I'm shure there are still enough bugs and enhancement possibilitys

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.17 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.18 2004/03/15 19:24:43 chris2511 Exp $ 
  *
  */                           
 
@@ -116,6 +116,9 @@ int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 	for (i++; i<count; i++) {
 		free(namelist[i]);
 	}
+
+	/* free the user database */
+	uiddb_free(e2c.uid_db);
 	
 	free(namelist);
     return ret;
