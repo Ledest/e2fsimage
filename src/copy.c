@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.9 2004/01/28 20:17:28 chris2511 Exp $ 
+ * $Id: copy.c,v 1.10 2004/02/03 23:22:30 chris2511 Exp $ 
  *
  */                           
 
@@ -55,7 +55,6 @@ int e2cp(e2i_ctx_t *e2c)
 	struct ext2_inode inode;
 	int ret, b_read, b_wrote;
 	char *ptr, *ptr1;
-	const char *fname;
 	off_t size = 0;
 	struct stat s;
 	FILE *fp;
@@ -129,14 +128,6 @@ int e2cp(e2i_ctx_t *e2c)
 	ret = inodb_add(e2c->ino_db, s.st_ino, e2ino);
 	if (ret) return -1;
 
-	fname = basename(e2c->curr_path);
 	/* It is time to link the inode into the directory */
-	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_REG_FILE);
-	if (ret == EXT2_ET_DIR_NO_SPACE) {
-		/* resize the directory */
-		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)
-			ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_REG_FILE);
-	}			  
-	E2_ERR(ret, "Ext2 Link Error", fname);
-	return 0;	
+	return e2link(e2c, basename(e2c->curr_path), e2ino, EXT2_FT_REG_FILE);
 }

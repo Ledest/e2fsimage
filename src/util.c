@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: util.c,v 1.4 2004/01/28 12:28:44 chris2511 Exp $ 
+ * $Id: util.c,v 1.5 2004/02/03 23:22:30 chris2511 Exp $ 
  *
  */                           
 
@@ -78,4 +78,35 @@ void init_inode(e2i_ctx_t *e2c, struct ext2_inode *i, struct stat *s)
 									  
 }
 			
+int e2link(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino, int mode)
+{
+	int ret;
+	
+	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, mode);
+	if (ret == EXT2_ET_DIR_NO_SPACE) {
+		/* resize the directory */
+		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0) {
+			ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, mode);
+		}
+	}
+	E2_ERR(ret, "Ext2 Link Error", fname);
+	return 0;
+}	
+
+__u16 mode2filetype(mode_t m)
+{
+	__u16 e2ft;
+	/* select modetype from mode */
+	switch (m & S_IFMT) {
+		case S_IFDIR : e2ft = EXT2_FT_DIR; break;
+		case S_IFREG : e2ft = EXT2_FT_REG_FILE; break;
+		case S_IFLNK : e2ft = EXT2_FT_SYMLINK; break;
+		case S_IFSOCK: e2ft = EXT2_FT_SOCK; break;
+		case S_IFCHR : e2ft = EXT2_FT_CHRDEV; break;
+		case S_IFBLK : e2ft = EXT2_FT_BLKDEV; break;
+		case S_IFIFO : e2ft = EXT2_FT_FIFO; break;
+		default:       e2ft = EXT2_FT_UNKNOWN;
+	}
+	return e2ft;
+}	
 

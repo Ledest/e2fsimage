@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.14 2004/01/29 15:48:11 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.15 2004/02/03 23:22:30 chris2511 Exp $ 
  *
  */                           
 
@@ -98,7 +98,10 @@ int read_special_file(e2i_ctx_t *e2c);
 /* functions from util.c */
 const char *basename(const char *path);
 void init_inode(e2i_ctx_t *e2c, struct ext2_inode *i, struct stat *s);
+int e2link(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino, int mode);
+__u16 mode2filetype(mode_t m);
 
+/* inode database functions */
 inodb_t *inodb_init(void);
 int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2);
 ext2_ino_t inodb_search(inodb_t *db, ino_t ino1);

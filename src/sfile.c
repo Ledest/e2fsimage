@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.9 2004/01/29 15:48:11 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.10 2004/02/03 23:22:30 chris2511 Exp $ 
  *
  */                           
 
@@ -82,12 +82,7 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname, struct stat *s)
 		inode.i_block[0] = s->st_rdev;
 
 	/* select modetype from mode */
-	e2mod =  EXT2_FT_UNKNOWN;
-	switch (s->st_mode & S_IFMT) {
-		case S_IFCHR : e2mod = EXT2_FT_CHRDEV; break;
-		case S_IFBLK : e2mod = EXT2_FT_BLKDEV; break;
-		case S_IFIFO : e2mod = EXT2_FT_FIFO; break;
-	}
+	e2mod = mode2filetype(s->st_mode);
 	
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
@@ -95,7 +90,7 @@ static int special_inode(e2i_ctx_t *e2c, const char *fname, struct stat *s)
 	e2c->cnt.specf++;
 	
 	/* It is time to link the inode into the directory */
-	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, e2mod);
+	return e2link(e2c, fname, e2ino, e2mod);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {
 		/* resize the directory */
 		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)

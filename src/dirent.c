@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.12 2004/01/29 15:48:11 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.13 2004/02/03 23:22:30 chris2511 Exp $ 
  *
  */                           
 
@@ -53,7 +53,7 @@
 int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 {
 	struct dirent **namelist;
-	int i,ret, len, count, j;
+	int i,ret, len, count;
 	char path[256], *ppath;
 	ext2_ino_t olddir;
 	
@@ -106,8 +106,8 @@ int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 	 * in case of an error iterate over the remaining 
 	 * entries and free them
 	 */
-	for (j = i+1; j<count; j++) {
-		free(namelist[j]);
+	for (i++; i<count; i++) {
+		free(namelist[i]);
 	}
 	
 	free(namelist);
@@ -116,10 +116,9 @@ int e2cpdir(e2i_ctx_t *e2c, ext2_ino_t newdir)
 
 static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 {
-	const char *fname;
 	struct ext2_inode inode;
 	ext2_ino_t e2ino;
-	int ret;
+	int ret, e2mod;
 	
 	e2ino = inodb_search(e2c->ino_db, ino);
 	if (e2ino == 0) return 1;
@@ -138,20 +137,12 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 		printf("Creating hard link %s\n", e2c->curr_path);
 	
 	e2c->cnt.hardln++;
-
-	fname = basename(e2c->curr_path);
 		
+	/* resolve the filetype from i_mode */
+	e2mod = mode2filetype(inode.i_mode);
+	
 	/* It is time to link the inode into the directory */
-	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_REG_FILE);
-	if (ret == EXT2_ET_DIR_NO_SPACE) {
-		/* resize the directory */
-		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)
-			ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_REG_FILE);
-	}			  
-	E2_ERR(ret, "Ext2 Link Error", fname);
-		
-	return 0;
-		
+	return e2link(e2c, basename(e2c->curr_path), e2ino, e2mod);
 }
 	   
 int e2filetype_select(e2i_ctx_t *e2c)
