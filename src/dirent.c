@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.3 2004/01/18 13:52:20 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.4 2004/01/26 16:02:58 chris2511 Exp $ 
  *
  */                           
 
@@ -76,6 +76,7 @@ int e2cpdir(ext2_filsys fs, ext2_ino_t e2dir, const char *dirpath)
 		for (i = 0; i<count; i++) {
 			if (!strncmp(".", namelist[i]->d_name, 2)) continue ;
 			if (!strncmp("..", namelist[i]->d_name, 3)) continue ;
+			if (!strncmp("._DEVICES_.", namelist[i]->d_name, 12)) continue ;
 			strncpy(ppath, namelist[i]->d_name, 256 - len);
 			free(namelist[i]);
 			ret = e2filetype_select(fs, e2dir, path);

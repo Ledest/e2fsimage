@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.6 2004/01/18 13:52:20 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.7 2004/01/26 16:02:58 chris2511 Exp $ 
  *
  */                           
 
@@ -53,11 +53,7 @@
 #define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
 	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
 
-extern int default_uid;
-extern int default_gid;
-extern int verbose;
-extern int preserve_uidgid;
-
+int mke2fs(const char *fname, int size);
 int init_fs(ext2_filsys *fs, char *fsname, int size);
 int e2cp(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
 int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
@@ -69,5 +65,28 @@ int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path);
 /* functions from util.c */
 const char *basename(const char *path);
 void init_inode(struct ext2_inode *i, struct stat *s);
+
+/* inode DB */
+struct ino_pair {
+	ino_t ino1;
+	ext2_ino_t ino2;
+};
+
+typedef struct {
+	int size; 
+	int cnt; 
+	struct ino_pair *ino_pairs;
+} inodb_t ;
+
+inodb_t *inodb_init(void);
+int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2);
+ext2_ino_t inodb_search(inodb_t *db, ino_t ino1);
+void inodb_free(inodb_t *db);
+
+extern inodb_t *ino_db;
+extern int default_uid;
+extern int default_gid;
+extern int verbose;
+extern int preserve_uidgid;
 
 #endif

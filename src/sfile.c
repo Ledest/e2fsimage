@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.1 2004/01/25 23:03:37 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.2 2004/01/26 16:02:58 chris2511 Exp $ 
  *
  */                           
 
@@ -88,7 +88,7 @@ int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 {
 	FILE *fp;
 	char dir[256], fname[80], *pdir, type;
-	int len, ret, n, major, minor, mode;
+	int n, major, minor, mode;
 	dev_t rdev;
 	
 

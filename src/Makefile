@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.6 2004/01/25 23:00:41 chris2511 Exp $
+# $Id: Makefile,v 1.7 2004/01/26 16:02:57 chris2511 Exp $
 #
 ######################################################################
 
@@ -10,13 +10,21 @@ all: e2fsimage
 
 install:
 
-OBJS=initfs.o main.o copy.o symlink.o util.o mkdir.o dirent.o sfile.o
+OBJS=main.o copy.o symlink.o util.o mkdir.o \
+	dirent.o mke2fs.o inodb.o
+
+unused_OBJ=initfs.o sfile.o
 
 e2fsimage: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJS) e2fsimage
+
+install:
+	mkdir -p $(basedir)$(prefix)/bin
+	cp  e2fsimage $(basedir)$(prefix)/bin
+	$(STRIP) $(basedir)$(prefix)/bin/e2fsimage

@@ -1,0 +1,57 @@
+.TH e2fsimage 3 "14 January 2004" "_VERSION_" 
+.SH NAME
+e2fsimage \- create and populate an ext2 filesystem image as non-root user
+.SH SYNOPSIS
+.B e2fsimage
+[
+.I -f fsimage
+] [
+.I -d rootdir
+] [
+.I -u UID
+] [
+.I -g GID
+] [
+.I -v
+] [
+.I -c
+] [
+.I -s
+]
+.SH DESCRIPTION
+.LP
+Create an ext2 filesystem by copying the files from an existing directory
+structure. Supported filetypes are: regular files, directorys, hard-links
+and soft-links. Special files like block and character devices are not 
+supported (yet).
+
+.LP
+The usual way to create ext2 filesystem images for initial ramdisks,
+boot-floppys or bootable CDs is to create an image with eg. 
+"dd if=/dev/zero of=e2image bs=1024 count=4096" then this image
+will be formatted with: "mke2fs -F e2image".
+Now this fill must be loopback-mounted by 
+.B root
+and all files must be copied and created in this fs as root
+in order to set the different owners (usually root) and to create
+the special files.
+Since all this results in a file that may belong to a
+ordinary user, this file can be created and filled with the fs
+structure by her. This application manages to
++create such an image as ordinary user w/o 
+.I sudo
+or 
+.I suid root
+bit set.  
+
+.LP
+e2fsimage iterates over the directory structure supplied in 
+.I rootdir 
+and writes every file, link and directory to the e2fs image in
+.I fsimage
+including all hidden files. Hard links are resolved to result in hard links in the image. softlinks are copied as they are and not resolved or altered. In the 
+.I rootdir
+/home/user/build/rootdir a link to the file "file" should link to "->/file"
+if the image is used as root filesystem or to "->file if used elsewhere
+but not to "->/home/user/build/rootdir/file".
+

@@ -1,14 +1,14 @@
 #
 # vi: set sw=4 ts=4: 
 #
-# $Id: Makefile,v 1.2 2004/01/15 00:24:36 chris2511 Exp $
+# $Id: Makefile,v 1.3 2004/01/26 16:02:57 chris2511 Exp $
 #
 ######################################################################
 
 
 SUBDIRS=src man
 
-all clean: $(SUBDIRS)
+all clean install: $(SUBDIRS)
 	for x in $(SUBDIRS); do \
 		make -C $$x $@; \
 	done

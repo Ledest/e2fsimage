@@ -19,6 +19,8 @@
 #
 #######################################################
 
+version=0.1.0
+
 DIRS="$QTDIR $@ /usr /usr/local"
 
 CF=""
@@ -111,6 +113,7 @@ echo "LDFLAGS   :${LIBS}${LDIRS}"
 echo "PREFIX    :${prefix:=/usr/local}"
 echo "CPPFLAGS  :${CF}"
 echo "CFLAGS    :${CFLAGS:=-Wall}"
+echo "VERSION   :${version}"
 echo
 
 cat >Local.mak <<EOF
@@ -126,6 +129,8 @@ STRIP=${STRIP:=strip}
 
 prefix=${prefix}
 basedir=${basedir}
+VERSION=${version}
+
 EOF
 
 for dirs in /bin /usr/bin /usr/local/bin /sw/bin; do

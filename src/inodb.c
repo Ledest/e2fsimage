@@ -35,79 +35,67 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.8 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: inodb.c,v 1.1 2004/01/26 16:02:58 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
-#include <unistd.h>
+#include <string.h>
 
-int default_uid = 0;
-int default_gid = 0;
-int verbose = 0;
-int preserve_uidgid = 0;
-inodb_t *ino_db = NULL;
+#define RESIZE 50
 
-static void usage(char *name) {
-	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size] [-v] [-c]\n\n"
-			"-f  formatted ext2 filesystem image\n"
-			"-d  root directory to create\n"
-			"-u  uid to use instead of the real one\n"
-			"-g  gid to use instead of the real one\n"
-			"-v  be verbose\n"
-			"-s  size of the filesystem\n"
-			"-c  create the filesystem\n", name);
-	exit(0);
-}
-
-int main(int argc, char *argv[] )
+inodb_t *inodb_init(void)
 {
-	int ret = 0, c, create=0, ksize=16384;
-	ext2_filsys fs;
-	char *e2fsfile = NULL, *rootdir = NULL;
-	
-	init_ext2_err_tbl();
-	
-	do {
-		c = getopt(argc, argv, "vchf:d:u:g:s:");
-		switch (c) {
-			case 'v': verbose = 1; break;
-			case 'p': preserve_uidgid = 1; break;
-			case 'u': default_uid = atoi(optarg); break;
-			case 'g': default_gid = atoi(optarg); break;
-			case 'f': e2fsfile = optarg; break;
-			case 'd': rootdir = optarg; break;
-			case 'h': usage(argv[0]); break;
-			case 'c': create = 1; break;
-			case 's': ksize = atoi(optarg); break;
-		}
-			 
-	} while (c >= 0);
-/*	
- *	init_fs(&fs, "e2file", 1024);
- *	fs->umask = 022;	
- */
-	if (create) {
-		mke2fs(e2fsfile, ksize);
+	inodb_t *db;
+	db = (inodb_t *)malloc(sizeof(inodb_t));
+	if (db == NULL) {
+		fprintf(stderr, "malloc() failed\n");
+		return 0;
 	}
-	
-	ino_db = inodb_init();
-	if(! (rootdir && e2fsfile)) usage (argv[0]);
-	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &fs);
-	E2_ERR(ret, "Error opening filesystem: ", e2fsfile);
-
-	ext2fs_read_inode_bitmap(fs);
-	ext2fs_read_block_bitmap(fs);
-
-	ret = e2cpdir(fs, EXT2_ROOT_INO, rootdir);
-	inodb_free(ino_db);
-	if (ret) return ret;
-	
-	ext2fs_flush(fs);
-	
-	ret = ext2fs_close(fs);
-	E2_ERR(ret, "Error closing the filesystem file:", e2fsfile);
-
-	return ret;
+	db->size=RESIZE;
+	db->cnt=0;
+	db->ino_pairs = (struct ino_pair *)malloc(RESIZE * sizeof(struct ino_pair));
+	if (db->ino_pairs == NULL) {
+		fprintf(stderr, "malloc() failed\n");
+		free(db);
+		return 0;
+	}
+	return db;
 }
 
+int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2)
+{
+	if (db->cnt >= db->size) {
+		struct ino_pair *ptr;
+		ptr = realloc(db->ino_pairs, (db->size + RESIZE) * sizeof(struct ino_pair) );
+		if (ptr == NULL) {
+			fprintf(stderr, "realloc() failed\n");
+			return -1;
+		}
+		db->size += RESIZE;
+		db->ino_pairs = ptr;
+	}
+	db->ino_pairs[db->cnt].ino1 = ino1;
+	db->ino_pairs[db->cnt].ino2 = ino2;
+	db->cnt++;
+	return 0;
+}
+
+ext2_ino_t inodb_search(inodb_t *db, ino_t ino1)
+{
+	int i;
+	for (i=0; i<db->cnt; i++) {
+		if (ino1 == db->ino_pairs[i].ino1) {
+			return db->ino_pairs[i].ino2;
+		}
+	}
+	return 0;
+}
+
+void inodb_free(inodb_t *db)
+{
+	if (db) {
+		free(db->ino_pairs);
+		free(db);
+	}
+}

@@ -35,79 +35,52 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.8 2004/01/26 16:02:58 chris2511 Exp $ 
+ * $Id: mke2fs.c,v 1.1 2004/01/26 16:02:58 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <wait.h>
 
-int default_uid = 0;
-int default_gid = 0;
-int verbose = 0;
-int preserve_uidgid = 0;
-inodb_t *ino_db = NULL;
-
-static void usage(char *name) {
-	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size] [-v] [-c]\n\n"
-			"-f  formatted ext2 filesystem image\n"
-			"-d  root directory to create\n"
-			"-u  uid to use instead of the real one\n"
-			"-g  gid to use instead of the real one\n"
-			"-v  be verbose\n"
-			"-s  size of the filesystem\n"
-			"-c  create the filesystem\n", name);
-	exit(0);
-}
-
-int main(int argc, char *argv[] )
+int mke2fs(const char *fname, int size)
 {
-	int ret = 0, c, create=0, ksize=16384;
-	ext2_filsys fs;
-	char *e2fsfile = NULL, *rootdir = NULL;
+	int pid, i, status, fd;
+	FILE *fp;
+	char *buf;
 	
-	init_ext2_err_tbl();
-	
-	do {
-		c = getopt(argc, argv, "vchf:d:u:g:s:");
-		switch (c) {
-			case 'v': verbose = 1; break;
-			case 'p': preserve_uidgid = 1; break;
-			case 'u': default_uid = atoi(optarg); break;
-			case 'g': default_gid = atoi(optarg); break;
-			case 'f': e2fsfile = optarg; break;
-			case 'd': rootdir = optarg; break;
-			case 'h': usage(argv[0]); break;
-			case 'c': create = 1; break;
-			case 's': ksize = atoi(optarg); break;
-		}
-			 
-	} while (c >= 0);
-/*	
- *	init_fs(&fs, "e2file", 1024);
- *	fs->umask = 022;	
- */
-	if (create) {
-		mke2fs(e2fsfile, ksize);
+	fp = fopen(fname, "wb+");
+	if (!fp) {
+		perror("Error opening file");
+		return 1;
 	}
-	
-	ino_db = inodb_init();
-	if(! (rootdir && e2fsfile)) usage (argv[0]);
-	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &fs);
-	E2_ERR(ret, "Error opening filesystem: ", e2fsfile);
-
-	ext2fs_read_inode_bitmap(fs);
-	ext2fs_read_block_bitmap(fs);
-
-	ret = e2cpdir(fs, EXT2_ROOT_INO, rootdir);
-	inodb_free(ino_db);
-	if (ret) return ret;
-	
-	ext2fs_flush(fs);
-	
-	ret = ext2fs_close(fs);
-	E2_ERR(ret, "Error closing the filesystem file:", e2fsfile);
-
-	return ret;
+	buf = malloc(1024);
+	if (!buf) {
+		fclose(fp);
+		return -1;
+	}
+	memset(buf, 0, 1024 );
+	for (i=0; i<size; i++) {
+		fwrite(buf, 1024, 1, fp);
+	}
+	free(buf);
+	fclose(fp);
+	fd = open("/dev/null", O_WRONLY);
+	pid = fork();
+	if (!pid) {
+		dup2(fd, 1);
+		execl("/sbin/mkfs.ext2", "mkfs.ext2", "-F", fname);
+		execl("/sbin/mke2fs", "mke2fs", "-F", fname);
+	}
+	waitpid(pid, &status, 0);
+	close(fd);
+	if (WEXITSTATUS(status) !=0 ) {
+		fprintf(stderr, "mke2fs failed with return code %d\n", WEXITSTATUS(status));
+		return -1;
+	}
+	return 0;
 }
-
+		
