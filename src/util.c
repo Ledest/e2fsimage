@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: util.c,v 1.3 2004/01/25 23:00:44 chris2511 Exp $ 
+ * $Id: util.c,v 1.4 2004/01/28 12:28:44 chris2511 Exp $ 
  *
  */                           
 
@@ -57,12 +57,12 @@ const char *basename(const char *path)
 	return bn;
 }
 
-void init_inode(struct ext2_inode *i, struct stat *s)
+void init_inode(e2i_ctx_t *e2c, struct ext2_inode *i, struct stat *s)
 {
 	/* do the root squash */
-	if (! preserve_uidgid) {
-		s->st_uid=default_uid;
-		s->st_gid=default_gid;
+	if (! e2c->preserve_uidgid) {
+		s->st_uid = e2c->default_uid;
+		s->st_gid = e2c->default_gid;
 	}
 
 	memset(i, 0, sizeof(struct ext2_inode));

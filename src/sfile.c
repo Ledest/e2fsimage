@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.5 2004/01/28 09:16:57 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.6 2004/01/28 12:28:44 chris2511 Exp $ 
  *
  */                           
 
@@ -47,76 +47,82 @@
 #include <errno.h>
 #define BUF_SIZE 4096
 
-static int special_inode(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev,
-	int rdev, mode_t mode, ino_t ino) 
+static int special_inode(e2i_ctx_t *e2c, const char *fname,  int rdev, mode_t mode, ino_t ino) 
 {
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
-	int ret;
-	const char *fname;
+	int ret, e2mod;
 	struct stat s;
 	
 	/* create a new inode for this special device file */
-	ret = ext2fs_new_inode(fs, e2dir, mode, 0, &e2ino);
-	E2_ERR(ret, "Could not create new inode for:", pathdev);
+	ret = ext2fs_new_inode(e2c->fs, e2c->curr_e2dir, mode, 0, &e2ino);
+	E2_ERR(ret, "Could not create new inode for:", fname);
 	
 	/* populate the new inode */
-	ext2fs_inode_alloc_stats(fs, e2ino, 1);
+	ext2fs_inode_alloc_stats(e2c->fs, e2ino, 1);
 	memset(&s, 0, sizeof(struct stat));
 	s.st_mode = mode;
 	
 	if (ino) { 
-		ret = inodb_add(ino_db, ino, e2ino);
+		ret = inodb_add(e2c->ino_db, ino, e2ino);
 		if (ret) return -1;
 	}
 	
-	init_inode(&inode, &s);
+	/* 
+	 * initialize inode and set major and minor.
+	 * major and minor do live in i_block[0]
+	 * obvious, eh ?? 
+	 */
+	init_inode(e2c, &inode, &s);
 	inode.i_block[0] = rdev;
 
-	ret = ext2fs_write_inode(fs, e2ino, &inode);
+	/* select modetype from mode */
+	e2mod =  EXT2_FT_UNKNOWN;
+	if (S_ISCHR(mode)) e2mod = EXT2_FT_CHRDEV;
+	if (S_ISBLK(mode)) e2mod = EXT2_FT_BLKDEV;
+	
+	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
 	
-	fname = basename(pathdev);
-
 	/* It is time to link the inode into the directory */
-	ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, e2mod);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {
 		/* resize the directory */
-		if (ext2fs_expand_dir(fs, e2dir) == 0)
-			ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_REG_FILE);
+		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)
+			ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, e2mod);
 	}			  
 	E2_ERR(ret, "Ext2 Link Error", fname);
 	return 0;	
 }
 
-int e2mknod(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile)
+int e2mknod(e2i_ctx_t *e2c)
 {
 	int ret;
 	struct stat s;
 	
-	ret = lstat(pathfile, &s);
-    ERRNO_ERR(ret, "Could not stat: ", pathfile);
+	ret = lstat(e2c->curr_path, &s);
+    ERRNO_ERR(ret, "Could not stat: ", e2c->curr_path);
 	
 	if (!(S_ISCHR(s.st_mode) || S_ISBLK(s.st_mode)) ) {
-		fprintf(stderr, "File '%s' is not a block or charspecial device\n", pathfile);
+		fprintf(stderr, "File '%s' is not a block or charspecial device\n", e2c->curr_path);
 		return -1;
 	}
-	if (verbose)
-		printf("Creating special file: %s\n", pathfile);
-	
-	return special_inode(fs, e2dir, basename(pathfile), s.st_rdev, s.st_mode, s.st_ino);
+	if (e2c->verbose)
+		printf("Creating special file: %s\n", e2c->curr_path);
+
+	return special_inode(e2c, basename(e2c->curr_path), s.st_rdev, s.st_mode, s.st_ino);
 }
 			
 
-int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
+int read_special_file(e2i_ctx_t *e2c)
 {
 	FILE *fp;
 	char fname[80], *line_buf, type;
 	int n, major, minor, mode, ln=0;
 	dev_t rdev;
 	
-	fp = fopen(pathdev, "r");
-	ERRNO_ERR(!fp, "Failed to open: ", pathdev);
+	fp = fopen(e2c->curr_path, "r");
+	ERRNO_ERR(!fp, "Failed to open: ", e2c->curr_path);
 	fname[0] = '\0';
 	
 	line_buf = (char *)malloc(256);
@@ -135,7 +141,7 @@ int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 		if (line_buf[0] == '\n' || fname[0] == '#' ) continue;
 		if (n != 5) {
 			fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
-				pathdev, ln, fname);
+				e2c->curr_path, ln, fname);
 			free(line_buf);
 			return -1;
 		}	
@@ -145,14 +151,14 @@ int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev)
 			case 'b' : mode |= S_IFBLK; break;
 			default:
 				fprintf(stderr, "Bad mode (%c) in %s, line %d\n",
-					type, pathdev, ln);
+					type, e2c->curr_path, ln);
 				free(line_buf);
 				return -1;
 		}
-		if (verbose)
+		if (e2c->verbose)
 			printf("Creating special file: %s (%c, Major %d, Minor: %d)\n",
 					fname, type, major, minor);
-		special_inode(fs, e2dir, fname, rdev, mode, 0);
+		special_inode(e2c, fname, rdev, mode, 0);
 		fname[0] = '\0';
 	}
 	free(line_buf);

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: symlink.c,v 1.4 2004/01/27 15:34:12 chris2511 Exp $ 
+ * $Id: symlink.c,v 1.5 2004/01/28 12:28:44 chris2511 Exp $ 
  *
  */                           
 
@@ -48,7 +48,7 @@
 
 #define BUF_SIZE 256
 
-int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink) 
+int e2symlink(e2i_ctx_t *e2c) 
 {
 	
 	ext2_file_t e2file;
@@ -61,39 +61,39 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 	struct stat s;
 	
 	/* 'stat' the file we want to copy */
-	ret = lstat(pathlink, &s);
-	ERRNO_ERR(ret, "Could not 'stat': ", pathlink);
+	ret = lstat(e2c->curr_path, &s);
+	ERRNO_ERR(ret, "Could not 'stat': ", e2c->curr_path);
 			
 	if (!S_ISLNK(s.st_mode)) {
-		fprintf(stderr, "File '%s' is not a symlink file\n", pathlink);
+		fprintf(stderr, "File '%s' is not a symlink file\n", e2c->curr_path);
 		return -1;
 	}
 
 	/* create a new inode for this file */
-	ret = ext2fs_new_inode(fs, e2dir, s.st_mode, 0, &e2ino);
-	E2_ERR(ret, "Could not create new inode for: ", pathlink);
+	ret = ext2fs_new_inode(e2c->fs, e2c->curr_e2dir, s.st_mode, 0, &e2ino);
+	E2_ERR(ret, "Could not create new inode for: ", e2c->curr_path);
 	
 	/* populate the new inode */
-	ext2fs_inode_alloc_stats(fs, e2ino, 1);
+	ext2fs_inode_alloc_stats(e2c->fs, e2ino, 1);
 	
-	init_inode(&inode, &s);
+	init_inode(e2c, &inode, &s);
 
-	ret = ext2fs_write_inode(fs, e2ino, &inode);
+	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "could not write inode", "");
 	
 	/* open the targetfile */
-	ret = ext2fs_file_open(fs, e2ino, EXT2_FILE_WRITE, &e2file);
+	ret = ext2fs_file_open(e2c->fs, e2ino, EXT2_FILE_WRITE, &e2file);
 	E2_ERR(ret, "file open error", "");
 
 	/* open the source file */
-	size = readlink(pathlink, buf, BUF_SIZE);
+	size = readlink(e2c->curr_path, buf, BUF_SIZE);
 	if (size < 0 || size >= BUF_SIZE) {
-		fprintf(stderr, "Error reading symlink '%s': %s\n", pathlink, strerror(errno));
+		fprintf(stderr, "Error reading symlink '%s': %s\n", e2c->curr_path, strerror(errno));
 		return -1;
 	}
 	
-	if (verbose)
-		printf("Copying symlink %s\n",pathlink);
+	if (e2c->verbose)
+		printf("Copying symlink %s\n",e2c->curr_path);
 	
 	ret = ext2fs_file_write(e2file, buf, size, &written);
 	if (ret) {
@@ -110,18 +110,18 @@ int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink)
 		return -1;
 	}
 	
-	ret = inodb_add(ino_db, s.st_ino, e2ino);
+	ret = inodb_add(e2c->ino_db, s.st_ino, e2ino);
 	if (ret) return -1;
 
 	
-	fname = basename(pathlink);
+	fname = basename(e2c->curr_path);
 	
 	/* It is time to link the inode into the directory */
-	ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_SYMLINK);
+	ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_SYMLINK);
 	if (ret == EXT2_ET_DIR_NO_SPACE) {
 		/* resize the directory */
-		if (ext2fs_expand_dir(fs, e2dir) == 0)
-			ret = ext2fs_link(fs, e2dir, fname, e2ino, EXT2_FT_SYMLINK);
+		if (ext2fs_expand_dir(e2c->fs, e2c->curr_e2dir) == 0)
+			ret = ext2fs_link(e2c->fs, e2c->curr_e2dir, fname, e2ino, EXT2_FT_SYMLINK);
 	}			  
 	
 	E2_ERR(ret, "e2-link error", "");

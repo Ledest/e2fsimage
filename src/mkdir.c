@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mkdir.c,v 1.2 2004/01/25 23:00:43 chris2511 Exp $ 
+ * $Id: mkdir.c,v 1.3 2004/01/28 12:28:44 chris2511 Exp $ 
  *
  */                           
 
@@ -43,31 +43,30 @@
 #include <errno.h>
 #include <string.h>
 
-int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
-		 ext2_ino_t *newdir) {
+int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 
 	int ret;
 	struct stat s;
 	const char *dname;
 	
-	ret = lstat(path, &s);
-	ERRNO_ERR(ret,"Could not 'stat': ", path);
+	ret = lstat(e2c->curr_path, &s);
+	ERRNO_ERR(ret,"Could not 'stat': ", e2c->curr_path);
 	
 	if (!S_ISDIR(s.st_mode)) {
-		fprintf(stderr, "File '%s' is not a directory\n", path);
+		fprintf(stderr, "File '%s' is not a directory\n", e2c->curr_path);
 		return -1;
 	}
 		  
-	dname = basename(path);
+	dname = basename(e2c->curr_path);
 	
-	ret = ext2fs_mkdir(fs, e2dir, 0, dname);
+	ret = ext2fs_mkdir(e2c->fs, e2c->curr_e2dir, 0, dname);
 	E2_ERR(ret, "Could not create dir: ", dname);
 
-	if (verbose)
+	if (e2c->verbose)
 		printf ("Creating directory %s\n", dname);
 
 	if (newdir) {
-		ret = ext2fs_lookup(fs, e2dir, dname, strlen(dname), 0, newdir);
+		ret = ext2fs_lookup(e2c->fs, e2c->curr_e2dir, dname, strlen(dname), 0, newdir);
 		E2_ERR(ret, "Could not Ext2-lookup: ", dname);
 	}		
 	return 0;

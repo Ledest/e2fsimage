@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.10 2004/01/27 23:35:21 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.11 2004/01/28 12:28:44 chris2511 Exp $ 
  *
  */                           
 
@@ -53,23 +53,6 @@
 #define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
 	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
 
-int mke2fs(const char *fname, int size);
-int init_fs(ext2_filsys *fs, char *fsname, int size);
-
-int e2cp(ext2_filsys fs, ext2_ino_t e2ino, const char *pathfile);
-int e2symlink(ext2_filsys fs, ext2_ino_t e2dir, const char *pathlink);
-int e2mkdir(ext2_filsys fs, ext2_ino_t e2dir, const char *path,
-	   	ext2_ino_t *newdir);
-int e2cpdir(ext2_filsys fs, ext2_ino_t parent, const char *dirpath);
-int e2mknod(ext2_filsys fs, ext2_ino_t e2dir, const char *pathfile);
-
-int e2filetype_select(ext2_filsys fs, ext2_ino_t e2dir, const char *path);
-int read_special_file(ext2_filsys fs, ext2_ino_t e2dir, const char *pathdev);
-
-/* functions from util.c */
-const char *basename(const char *path);
-void init_inode(struct ext2_inode *i, struct stat *s);
-
 /* inode DB */
 struct ino_pair {
 	ino_t ino1;
@@ -82,21 +65,7 @@ typedef struct {
 	struct ino_pair *ino_pairs;
 } inodb_t ;
 
-inodb_t *inodb_init(void);
-int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2);
-ext2_ino_t inodb_search(inodb_t *db, ino_t ino1);
-void inodb_free(inodb_t *db);
-
-extern inodb_t *ino_db;
-extern int default_uid;
-extern int default_gid;
-extern int verbose;
-extern int preserve_uidgid;
-extern const char *dev_file;
-
-#if 0
-
-struct e2i_ctx {
+typedef struct {
     ext2_filsys fs;
     ext2_ino_t curr_e2dir;
     const char *curr_path;
@@ -107,8 +76,28 @@ struct e2i_ctx {
     int verbose;
     int preserve_uidgid;
     const char *dev_file;
-}
+} e2i_ctx_t;
 
-#endif
+int mke2fs(const char *fname, int size);
+int init_fs(ext2_filsys *fs, char *fsname, int size);
+
+int e2cp(e2i_ctx_t *e2c);
+int e2symlink(e2i_ctx_t *e2c);
+int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir);
+int e2cpdir(e2i_ctx_t *e2c);
+int e2mknod(e2i_ctx_t *e2c);
+
+int e2filetype_select(e2i_ctx_t *e2c);
+int read_special_file(e2i_ctx_t *e2c);
+
+/* functions from util.c */
+const char *basename(const char *path);
+void init_inode(e2i_ctx_t *e2c, struct ext2_inode *i, struct stat *s);
+
+inodb_t *inodb_init(void);
+int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2);
+ext2_ino_t inodb_search(inodb_t *db, ino_t ino1);
+void inodb_free(inodb_t *db);
+
 
 #endif

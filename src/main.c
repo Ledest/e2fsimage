@@ -35,19 +35,12 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.12 2004/01/27 23:35:21 chris2511 Exp $ 
+ * $Id: main.c,v 1.13 2004/01/28 12:28:44 chris2511 Exp $ 
  *
  */                           
 
 #include "e2fsimage.h"
 #include <unistd.h>
-
-int default_uid = 0;
-int default_gid = 0;
-int verbose = 0;
-int preserve_uidgid = 0;
-inodb_t *ino_db = NULL;
-const char *dev_file = ".DEVICES";
 
 
 static void usage(char *name) {
@@ -68,24 +61,29 @@ static void usage(char *name) {
 int main(int argc, char *argv[] )
 {
 	int ret = 0, c, create=1, ksize=4096;
-	ext2_filsys fs;
-	char *e2fsfile = NULL, *rootdir = ".";
+	char *e2fsfile = NULL;
+	e2i_ctx_t e2c;
 	
 	init_ext2_err_tbl();
+	memset(&e2c, 0, sizeof(e2c));
+	
+	e2c.dev_file = ".DEVICES";
+	e2c.curr_e2dir = EXT2_ROOT_INO;
+	e2c.curr_path = ".";
 	
 	do {
 		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:");
 		switch (c) {
-			case 'v': verbose = 1; break;
-			case 'p': preserve_uidgid = 1; break;
-			case 'u': default_uid = atoi(optarg); break;
-			case 'g': default_gid = atoi(optarg); break;
+			case 'v': e2c.verbose = 1; break;
+			case 'p': e2c.preserve_uidgid = 1; break;
+			case 'u': e2c.default_uid = atoi(optarg); break;
+			case 'g': e2c.default_gid = atoi(optarg); break;
 			case 'f': e2fsfile = optarg; break;
-			case 'd': rootdir = optarg; break;
+			case 'd': e2c.curr_path = optarg; break;
 			case 'h': usage(argv[0]); break;
 			case 'n': create = 0; break;
 			case 's': ksize = atoi(optarg); break;
-			case 'D': dev_file = optarg; break;
+			case 'D': e2c.dev_file = optarg; break;
 		}
 			 
 	} while (c >= 0);
@@ -94,22 +92,22 @@ int main(int argc, char *argv[] )
 		mke2fs(e2fsfile, ksize);
 	}
 	
-	ino_db = inodb_init();
+	e2c.ino_db = inodb_init();
 	
-	if(! (rootdir && e2fsfile)) usage (argv[0]);
-	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &fs);
+	if(! (e2c.curr_path && e2fsfile)) usage (argv[0]);
+	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &e2c.fs);
 	E2_ERR(ret, "Error opening filesystem: ", e2fsfile);
 
-	ext2fs_read_inode_bitmap(fs);
-	ext2fs_read_block_bitmap(fs);
+	ext2fs_read_inode_bitmap(e2c.fs);
+	ext2fs_read_block_bitmap(e2c.fs);
 	
-	ret = e2cpdir(fs, EXT2_ROOT_INO, rootdir);
-	inodb_free(ino_db);
+	ret = e2cpdir(&e2c);
+	inodb_free(e2c.ino_db);
 	if (ret) return ret;
 	
-	ext2fs_flush(fs);
+	ext2fs_flush(e2c.fs);
 	
-	ret = ext2fs_close(fs);
+	ret = ext2fs_close(e2c.fs);
 	E2_ERR(ret, "Error closing the filesystem file:", e2fsfile);
 
 	return ret;
