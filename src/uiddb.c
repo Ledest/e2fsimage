@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uiddb.c,v 1.4 2004/03/23 13:24:31 chris2511 Exp $ 
+ * $Id: uiddb.c,v 1.5 2005/05/25 18:06:52 chris2511 Exp $ 
  *
  */                           
 
@@ -145,7 +145,6 @@ int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid)
  */
 void uiddb_free(uiddb_t *db)
 {
-	if (db) {
+	if (db && db->first)
 		free(db->first);
-	}
 }

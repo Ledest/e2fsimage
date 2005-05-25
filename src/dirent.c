@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: dirent.c,v 1.19 2004/03/23 13:24:31 chris2511 Exp $ 
+ * $Id: dirent.c,v 1.20 2005/05/25 18:06:51 chris2511 Exp $ 
  *
  */                           
 
@@ -80,8 +80,8 @@ int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 
 	/* setup the uid database */
 	uiddb_init(&uiddb);
-	if (read_uids(&e2c, &uiddb)) {
-		uiddb_free(e2c.uid_db);	
+	if (read_uids(&e2c, &uiddb) < 0) {
+		uiddb_free(&uiddb);	
 		return -1;
 	}
 	e2c.uid_db = &uiddb;
@@ -183,9 +183,10 @@ int e2filetype_select(e2i_ctx_t *e2c)
 		case S_IFLNK : ret = e2symlink(e2c); break;
 		case S_IFCHR :
 		case S_IFIFO :
+		case S_IFSOCK:
 		case S_IFBLK : ret = e2mknod(e2c); break;
 		
-		default : fprintf(stderr, "Filetype not supported: %x\n", s.st_mode & S_IFMT);
+		default : fprintf(stderr, "Filetype of \"%s\" not supported: %x\n", e2c->curr_path,s.st_mode & S_IFMT);
 	}
 	return ret;
 }	

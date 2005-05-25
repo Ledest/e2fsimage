@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: symlink.c,v 1.8 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: symlink.c,v 1.9 2005/05/25 18:06:52 chris2511 Exp $ 
  *
  */                           
 
@@ -46,7 +46,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define BUF_SIZE 256
+#define SYM_BUF_SIZE 256
 
 int e2symlink(e2i_ctx_t *e2c) 
 {
@@ -55,7 +55,7 @@ int e2symlink(e2i_ctx_t *e2c)
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
 	int ret, written;
-	char buf[BUF_SIZE];
+	char buf[SYM_BUF_SIZE];
 	off_t size = 0;
 	struct stat s;
 	
@@ -85,8 +85,8 @@ int e2symlink(e2i_ctx_t *e2c)
 	E2_ERR(ret, "file open error", "");
 
 	/* open the source file */
-	size = readlink(e2c->curr_path, buf, BUF_SIZE);
-	if (size < 0 || size >= BUF_SIZE) {
+	size = readlink(e2c->curr_path, buf, SYM_BUF_SIZE);
+	if (size < 0 || size >= SYM_BUF_SIZE) {
 		fprintf(stderr, "Error reading symlink '%s': %s\n", e2c->curr_path, strerror(errno));
 		return -1;
 	}

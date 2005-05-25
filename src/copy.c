@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.11 2004/03/12 14:20:17 chris2511 Exp $ 
+ * $Id: copy.c,v 1.12 2005/05/25 18:06:51 chris2511 Exp $ 
  *
  */                           
 
@@ -45,7 +45,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#define BUF_SIZE 4096
 
 int e2cp(e2i_ctx_t *e2c) 
 {
@@ -89,14 +88,13 @@ int e2cp(e2i_ctx_t *e2c)
 	ERRNO_ERR(ret, "Error opening: ", e2c->curr_path);
 
 	/* read the input data and write it to the e2 file */
-	ptr = (char *)malloc(BUF_SIZE);
+	ptr = e2c->cp_buf;
 	while ((b_read = fread(ptr, 1, BUF_SIZE, fp)) > 0) {
 		ptr1 = ptr;
 		while (b_read > 0) {
 			ret = ext2fs_file_write(e2file, ptr1, b_read, &b_wrote);
 			if (ret) {
 				ext2fs_file_close(e2file);
-				free(ptr);
 				fclose(fp);
 				E2_ERR(ret, "Error writing ext2 file: ", e2c->curr_path);
 			}
@@ -106,7 +104,6 @@ int e2cp(e2i_ctx_t *e2c)
 		}
 	}
 
-	free(ptr);
 	fclose(fp);
 	ext2fs_file_close(e2file);
 

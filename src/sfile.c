@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: sfile.c,v 1.14 2004/03/23 13:24:31 chris2511 Exp $ 
+ * $Id: sfile.c,v 1.15 2005/05/25 18:06:52 chris2511 Exp $ 
  *
  */                           
 
@@ -123,7 +123,7 @@ int e2mknod(e2i_ctx_t *e2c)
 int read_special_file(e2i_ctx_t *e2c)
 {
 	FILE *fp;
-	char fname[80], *line_buf, type;
+	char fname[80], line_buf[256], type;
 	int n, major, minor, mode, ln=0, uid, gid, pug_tmp;
 	dev_t rdev;
 	struct stat s;
@@ -139,7 +139,6 @@ int read_special_file(e2i_ctx_t *e2c)
 	memset(&s, 0, sizeof(struct stat));
 	s.st_atime = s.st_mtime = s.st_ctime = time(NULL);
 	
-	line_buf = (char *)malloc(256);
 	/* iterate over the lines in the device file */
 	while (fgets(line_buf, 256, fp) != 0) {
 		ln++;  /* count the line numbers */
@@ -171,7 +170,6 @@ int read_special_file(e2i_ctx_t *e2c)
 			default:
 				fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
 					e2c->curr_path, ln, fname);
-				free(line_buf);
 				fclose(fp);
 				return -1;
 		}
@@ -186,7 +184,6 @@ int read_special_file(e2i_ctx_t *e2c)
 			default:
 				fprintf(stderr, "Bad mode (%c) in %s, line %d\n",
 					type, e2c->curr_path, ln);
-				free(line_buf);
 				fclose(fp);
 				return -1;
 		}
@@ -200,7 +197,6 @@ int read_special_file(e2i_ctx_t *e2c)
 		fname[0] = '\0';
 	}
 	e2c->preserve_uidgid = pug_tmp;
-	free(line_buf);
 	fclose(fp);
 	return 0;
 }				

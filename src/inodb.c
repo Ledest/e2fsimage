@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: inodb.c,v 1.2 2004/01/28 22:46:21 chris2511 Exp $ 
+ * $Id: inodb.c,v 1.3 2005/05/25 18:06:51 chris2511 Exp $ 
  *
  */                           
 
@@ -84,6 +84,8 @@ int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2)
 	if (db->cnt >= db->size) {
 		struct ino_pair *ptr;
 		ptr = realloc(db->ino_pairs, (db->size + RESIZE) * sizeof(struct ino_pair) );
+		printf("inodb_add: cnt=%d, size=%d, ssize=%d\n",
+				db->cnt,(db->size + RESIZE), sizeof(struct ino_pair)); 
 		if (ptr == NULL) {
 			fprintf(stderr, "realloc() failed\n");
 			return -1;

@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: passwd.c,v 1.1 2004/03/23 13:24:31 chris2511 Exp $ 
+ * $Id: passwd.c,v 1.2 2005/05/25 18:06:52 chris2511 Exp $ 
  *
  */                           
 
@@ -51,7 +51,7 @@
 int read_passwd(e2i_ctx_t *e2c)
 {
 	FILE *fp;
-	char *line_buf, *p1, *p2;
+	char line_buf[256], *p1, *p2;
 	int n=0, ln=0, uid, gid, len;
 
 	/* try to open the file or return */
@@ -63,12 +63,6 @@ int read_passwd(e2i_ctx_t *e2c)
 	if (e2c->verbose)
 		printf("Reading username information from %s\n", e2c->pw_file);
 
-	line_buf = (char *)malloc(256 * sizeof(char));
-	if (line_buf == NULL) {
-		fprintf(stderr, "malloc() failed\n");
-		return -1;
-	}
-	
 	/* iterate over the lines in the device file */
 	while (fgets(line_buf, 256, fp) != 0) {
 		ln++;  /* count the line numbers */
@@ -103,12 +97,10 @@ int read_passwd(e2i_ctx_t *e2c)
 		if (n != 1) {
 			fprintf(stderr, "Bad entry in %s, line %d : %s, %d, %d\n",
 				e2c->pw_file, ln, line_buf, uid, gid);
-			free(line_buf);
 			return -1;
 		}
 		uiddb_add(e2c->passwd, line_buf, uid, gid);		
 	}
-	free(line_buf);
 	return 0;
 }				
 

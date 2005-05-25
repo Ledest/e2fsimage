@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.18 2004/03/23 13:24:31 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.19 2005/05/25 18:06:51 chris2511 Exp $ 
  *
  */                           
 
@@ -45,6 +45,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define BUF_SIZE 4096
+
 #ifndef E2FSIMAGE_H
 #define E2FSIMAGE_H
 
@@ -53,7 +55,21 @@
 #define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
 	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
 
-#define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x))
+#define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x) || S_ISSOCK(x))
+
+
+#define MALLOC_DEBUG
+
+#ifdef MALLOC_DEBUG
+#define malloc(x) __malloc(x, __FILE__, __FUNCTION__, __LINE__)
+#define realloc(x,y) __realloc(x,y, __FILE__, __FUNCTION__, __LINE__)
+#define free(x) __free(x, __FILE__, __FUNCTION__, __LINE__)
+
+void *__malloc(int size, char *fil, char *func, int line);
+void *__realloc(void *p, int size, char *fil, char *func, int line);
+void __free(void *p, char *fil, char *func, int line);
+void list_table();
+#endif
 
 /* inode DB */
 struct ino_pair {
@@ -101,6 +117,7 @@ typedef struct {
     const char *dev_file;
     const char *uid_file;
     const char *pw_file;
+	unsigned char *cp_buf;
 	struct cnt_t *cnt;
 } e2i_ctx_t;
 

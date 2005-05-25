@@ -1,3 +1,12 @@
+e2fsimage 0.2.1
+  - support for K,M,G in file-size parameter
+  - some mallocs removed and malloc-debug code added
+  
+  From [andrep at cs tu-berlin de] (Andre Przywara):
+  - support for sockets added
+  - sparse-File support by not resetting the whole image
+    
+
 e2fsimage 0.2.0
   - support for user ids in .UIDGID file and
     usernames resolved by passwd file

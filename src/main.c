@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.23 2004/03/23 13:55:38 chris2511 Exp $ 
+ * $Id: main.c,v 1.24 2005/05/25 18:06:51 chris2511 Exp $ 
  *
  */                           
 
@@ -63,9 +63,38 @@ static void usage(char *name)
 			name);
 }
 
+/* return the size in Kilobyte */
+long getsize(const char *t)
+{
+	int len, f;
+	char c, *p;
+	long size;
+	
+	f = 1;
+	len = strlen(t);
+	c = t[len-1];
+	switch (c) {
+		case 'g':
+		case 'G': f *= 1024;
+		case 'm':
+		case 'M': f *= 1024;
+		case 'k':
+		case 'K': len--;
+	}
+	size = strtol(t, &p, 10) * f;
+		fprintf(stderr ,"malformed size string: '%s', p-t:%d, len:%d, Size:%ld\n",
+				t, (p-t), len, size);
+		
+	if (p - t != len) {
+		size = -1;
+	}
+	return size;
+}
+
 int main(int argc, char *argv[] )
 {
-	int ret = 0, c, create=1, ksize=4096;
+	int ret = 0, c, create=1;
+	long ksize=4096;
 	char *e2fsfile = NULL;
 	char passwd_file[80];
 	e2i_ctx_t e2c;
@@ -99,7 +128,7 @@ int main(int argc, char *argv[] )
 			case 'd': e2c.curr_path = optarg; break;
 			case 'h': usage(argv[0]); return 0;
 			case 'n': create = 0; break;
-			case 's': ksize = atoi(optarg); break;
+			case 's': ksize = getsize(optarg); break;
 			case 'D': e2c.dev_file = optarg; break;
 			case 'U': e2c.uid_file = optarg; break;
 			case 'P': e2c.pw_file = optarg; break;
@@ -108,7 +137,7 @@ int main(int argc, char *argv[] )
 	} while (c >= 0);
 	
 	/* sanity check */
-	if (e2fsfile == NULL || e2c.curr_path == NULL) {
+	if (e2fsfile == NULL || e2c.curr_path == NULL || ksize<0) {
 		usage(argv[0]);
 		return -1;
 	}
@@ -124,6 +153,9 @@ int main(int argc, char *argv[] )
 		if (ret !=0 ) return ret;
 	}
 	
+	/* sanity check */
+	if(! (e2c.curr_path && e2fsfile)) usage (argv[0]);
+	
 	/* prepare the inode database to lookup hardlinks */
 	e2c.ino_db = inodb_init();
 	if (e2c.ino_db == 0) return -1;
@@ -132,11 +164,15 @@ int main(int argc, char *argv[] )
 	uiddb_init(e2c.passwd);
 	read_passwd(&e2c); 
 	
-	/* sanity check */
-	if(! (e2c.curr_path && e2fsfile)) usage (argv[0]);
+	/* reserve memory for the file-copy */
+	e2c.cp_buf = malloc(BUF_SIZE);
+	if (!e2c.cp_buf) {
+		printf("Malloc failed\n");
+		return -1;
+	}
 	
 	/* open and read the filesystem image */
-	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 1, 1024, unix_io_manager, &e2c.fs);
+	ret = ext2fs_open (e2fsfile, EXT2_FLAG_RW, 0, 0, unix_io_manager, &e2c.fs);
 	E2_ERR(ret, "Error opening filesystem: ", e2fsfile);
 
 	ext2fs_read_inode_bitmap(e2c.fs);
@@ -148,8 +184,15 @@ int main(int argc, char *argv[] )
 	/* release the memory occupied by the inode hash table */
 	inodb_free(e2c.ino_db);
 	
+	/* Release the passwd list */
+	uiddb_free(e2c.passwd);
+	
+	free(e2c.cp_buf);
+	
 	/* write the filesystem to the image */
 	ext2fs_flush(e2c.fs);
+
+	list_table();
 	
 	if (ret) return ret;
 	
