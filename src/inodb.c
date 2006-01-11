@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: inodb.c,v 1.4 2006/01/11 21:57:27 chris2511 Exp $ 
+ * $Id: inodb.c,v 1.5 2006/01/11 23:19:38 chris2511 Exp $ 
  *
  */                           
 
@@ -77,7 +77,7 @@ inodb_t *inodb_init(void)
 
 /* 
  * adds an inode pair to the stack 
- * and resizes the stack if nessecary
+ * and resizes the stack if necessary
  */
 int inodb_add(inodb_t *db, ino_t ino1, ext2_ino_t ino2)
 {

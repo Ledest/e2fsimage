@@ -91,7 +91,14 @@ The default filename is
 The password file in this parameter is used to convert user names to uids and gids.
 It tries to use the default in 
 .IR rootdir /etc/passwd,
-if it is omitted, 
+if it is omitted.
+
+.TP
+.BI \-G\  group
+The group file in this parameter is used to convert group names to gids.
+It tries to use the default in 
+.IR rootdir /etc/group,
+if it is omitted. 
 
 .TP
 .BI \-f\  imgfile
@@ -103,7 +110,9 @@ is not given.
 .BI \-g\  gid
 Change the default group id from 0 to
 .IR gid .
-Until now there is only 1 gid for all files supported.
+Until now there is only 1 gid for all files supported. If you need different
+gids for different files, take a look at 
+.B USERS
 
 .TP
 .B \-n
@@ -127,7 +136,9 @@ Kbytes large. The default is 4096 kilo bytes.
 .BI \-u\  uid
 Change the default user-id from 0 to
 .IR uid .
-Until now there is only 1 uid for all files supported.
+Until now there is only 1 uid for all files supported. If you need different
+uids look at the section
+.B USERS
 
 .TP
 .BI \-v
@@ -184,8 +195,7 @@ as "ttyS1 c 4 65 0600"
 
 .SH USERS
 .LP
-Every directory may contain a file named .UIDGID and can be changed
-by the 
+Every directory may contain a file named .UIDGID . This filename can be changed by using the
 .I -U
 option. The format of this file is:
 .LP
@@ -193,6 +203,7 @@ option. The format of this file is:
 .RI [ \ <gid> \ ]
 .LP
 .I <name> <username> 
+.RI [ \ <groupname> \ ]
 .LP
 If <name> is ".", then the owner and group information
 will be kept recursively for all files and directorys below.
@@ -206,7 +217,13 @@ If the uid entry is not numeric it will be resolved by using
 provided by the option
 .IR \-P .
 In this case the gid is also taken from 
-.IR passwd .
+.IR passwd
+, if the groupname is omitted.
+If the groupname is provided, the
+.I group
+file from
+.B -G
+is used to resolve the gid.
 
 .TP
 .B name
@@ -221,6 +238,11 @@ is the numeric groupid of the file. It will be zero if omitted.
 .B username 
 is the user name of the file owner, resolved by 
 .IR passwd .
+.TP
+.B groupname
+is the group name of the file, resolved by
+.IR group .
+
 .SH BUGS
 .LP
 Bugs ?

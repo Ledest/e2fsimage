@@ -1,3 +1,7 @@
+e2fsimage 0.2.2
+  From [jtate at rpath com] (Joseph Tate) reworked by me:
+  - support for group name->gid matchin from a group file
+  
 e2fsimage 0.2.1
   - support for K,M,G in file-size parameter
   - some mallocs removed and malloc-debug code added
