@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.20 2006/01/11 21:57:27 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.21 2006/01/11 22:08:58 chris2511 Exp $ 
  *
  */                           
 
@@ -51,10 +51,16 @@
 #ifndef E2FSIMAGE_H
 #define E2FSIMAGE_H
 
-#define E2_ERR(ret,x,y) if (ret) { fprintf(stderr,"%s(%d): %s%s - ext2 error: %s\n", \
-					__FILE__, __LINE__, x, y, error_message(ret)); return ret; }
-#define ERRNO_ERR(ret,x,y)  if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
-	                    __FILE__, __LINE__, x, y, strerror(errno)); return ret; }
+#define E2_ERR(ret,x,y) \
+	if (ret) { fprintf(stderr,"%s(%d): %s%s - ext2 error: %s\n", \
+					__FILE__, __LINE__, x, y, error_message(ret)); \
+		return ret; \
+	}
+#define ERRNO_ERR(ret,x,y) \
+	if (ret) { fprintf(stderr,"%s(%d): %s%s - Error: %s\n", \
+					__FILE__, __LINE__, x, y, strerror(errno)); \
+		return ret; \
+	}
 
 #define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x) || S_ISSOCK(x))
 

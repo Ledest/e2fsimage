@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: passwd.c,v 1.2 2005/05/25 18:06:52 chris2511 Exp $ 
+ * $Id: passwd.c,v 1.3 2006/01/11 22:08:58 chris2511 Exp $ 
  *
  */                           
 
@@ -52,7 +52,7 @@ int read_passwd(e2i_ctx_t *e2c)
 {
 	FILE *fp;
 	char line_buf[256], *p1, *p2;
-	int n=0, ln=0, uid, gid, len;
+	int ln=0, uid, gid, len;
 
 	/* try to open the file or return */
 	fp = fopen(e2c->pw_file, "r");
@@ -76,14 +76,14 @@ int read_passwd(e2i_ctx_t *e2c)
 		}
 		
 		do {
-			uid = gid =-1;
+			uid = gid = -1;
 			p1  = strchr(line_buf, ':'); /* the : between name and password */
 			len = p1 - line_buf;
 			if (len > 79 || len < 1) break;
 			*p1 = '\0'; /* terminate name */
-			 p1 = strchr(p1+1,':') + 1; /* points to  UID */
+			 p1 = strchr(p1+1,':'); /* points to  UID */
 			 if (!p1) break;
-			 p2 = strchr(p1,':');
+			 p2 = strchr(++p1,':');
 			 if (!p2) break;
 			*p2++ = '\0'; /* delete : and point to GID */
 			uid = atoi(p1);
@@ -91,10 +91,9 @@ int read_passwd(e2i_ctx_t *e2c)
 			 if (!p1) break;
 			*p1 = '\0';
 			gid = atoi(p2);
-			n=1;	
 		} while(0);
 		
-		if (n != 1) {
+		if (gid <0 || uid <0 ) {
 			fprintf(stderr, "Bad entry in %s, line %d : %s, %d, %d\n",
 				e2c->pw_file, ln, line_buf, uid, gid);
 			return -1;

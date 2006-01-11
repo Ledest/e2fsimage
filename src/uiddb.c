@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uiddb.c,v 1.5 2005/05/25 18:06:52 chris2511 Exp $ 
+ * $Id: uiddb.c,v 1.6 2006/01/11 22:08:58 chris2511 Exp $ 
  *
  */                           
 
@@ -122,6 +122,7 @@ int uiddb_add(uiddb_t *db, const char* name, int uid, int gid)
 int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid)
 {
 	struct uidentry *ptr;
+	int len = strlen(name);
 	
 	if (!db->first) return 0;
 	
@@ -129,9 +130,9 @@ int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid)
 		((unsigned char *)ptr - (unsigned char *)db->first) < db->size;
 	   	ptr = (struct uidentry *)((unsigned char *)(ptr+1) + ptr->namelen) )
    	{
-		/* fast check for the sake of speed */
-		if (ptr->namelen != strlen(name) ) continue;
-		if (memcmp(name, ptr+1, ptr->namelen) == 0) {
+		/* fast size check for the sake of speed */
+		if (ptr->namelen != len) continue;
+		if (memcmp(name, ptr+1, len) == 0) {
 			*uid = ptr->uid;
 			*gid = ptr->gid;
 			return 1;

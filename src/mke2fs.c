@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: mke2fs.c,v 1.5 2006/01/11 21:57:27 chris2511 Exp $ 
+ * $Id: mke2fs.c,v 1.6 2006/01/11 22:08:58 chris2511 Exp $ 
  *
  */                           
 
@@ -68,7 +68,7 @@ int mke2fs(const char *fname, int size)
 		return -1;
 	}
 	memset(buf, 0, 1024 );
-	
+
 	fseek (fp,(size-1)*1024,SEEK_SET);
 	fwrite (buf,1024,1,fp);
 	fclose(fp);
