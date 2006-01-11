@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: e2fsimage.h,v 1.19 2005/05/25 18:06:51 chris2511 Exp $ 
+ * $Id: e2fsimage.h,v 1.20 2006/01/11 21:57:27 chris2511 Exp $ 
  *
  */                           
 
@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #define BUF_SIZE 4096
 
@@ -58,7 +59,7 @@
 #define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x) || S_ISSOCK(x))
 
 
-#define MALLOC_DEBUG
+#define MALLOC_DEBUG_
 
 #ifdef MALLOC_DEBUG
 #define malloc(x) __malloc(x, __FILE__, __FUNCTION__, __LINE__)
@@ -103,20 +104,22 @@ struct cnt_t {
 };
 
 typedef struct {
-    ext2_filsys fs;
-    ext2_ino_t curr_e2dir;
-    const char *curr_path;
+	ext2_filsys fs;
+	ext2_ino_t curr_e2dir;
+	const char *curr_path;
 
-    inodb_t *ino_db;
+	inodb_t *ino_db;
 	uiddb_t *uid_db;
 	uiddb_t *passwd;
-    int default_uid;
-    int default_gid;
-    int verbose;
-    int preserve_uidgid;
-    const char *dev_file;
-    const char *uid_file;
-    const char *pw_file;
+	uiddb_t *group;
+	int default_uid;
+	int default_gid;
+	int verbose;
+	int preserve_uidgid;
+	const char *dev_file;
+	const char *uid_file;
+	const char *pw_file;
+	const char *grp_file;
 	unsigned char *cp_buf;
 	struct cnt_t *cnt;
 } e2i_ctx_t;
@@ -152,7 +155,9 @@ int uiddb_search(uiddb_t *db, const char *name, int *uid, int *gid);
 void uiddb_free(uiddb_t *db);
 
 int read_uids(e2i_ctx_t *e2c, uiddb_t *db);
+int read_gids(e2i_ctx_t *e2c, uiddb_t *db);
 int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino);
 
 int read_passwd(e2i_ctx_t *e2c);
+int read_group(e2i_ctx_t *e2c);
 #endif

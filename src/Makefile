@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.16 2005/05/25 18:06:51 chris2511 Exp $
+# $Id: Makefile,v 1.17 2006/01/11 21:57:27 chris2511 Exp $
 #
 ######################################################################
 
@@ -9,7 +9,8 @@ sinclude ../Local.mak
 all: e2fsimage
 
 OBJS=main.o copy.o symlink.o util.o mkdir.o \
-	dirent.o mke2fs.o inodb.o sfile.o uiddb.o uids.o passwd.o malloc.o
+    dirent.o mke2fs.o inodb.o sfile.o uiddb.o uids.o \
+	malloc.o passwd.o group.o
 
 unused_OBJ=initfs.o
 

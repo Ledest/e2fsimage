@@ -1,6 +1,7 @@
 /* vi: set sw=4 ts=4: */
 /*
- * Copyright (C) 2001 Christian Hohnstaedt.
+ * Copyright (C) 2001 Christian Hohnstaedt
+ * Copyright (C) 2006 rPath, Inc.
  *
  *  All rights reserved.
  *
@@ -34,8 +35,9 @@
  *
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
+ * email: jtate@rpath.com
  *
- * $Id: uids.c,v 1.3 2006/01/11 21:57:27 chris2511 Exp $ 
+ * $Id: group.c,v 1.1 2006/01/11 21:57:27 chris2511 Exp $ 
  *
  */                           
 
@@ -45,29 +47,24 @@
 #include <errno.h>
 			
 /*
- * read the .UIDGID file
+ * read the etc/group file
  */
 
-int read_uids(e2i_ctx_t *e2c, uiddb_t *db)
+int read_group(e2i_ctx_t *e2c)
 {
 	FILE *fp;
- 	char fname[256], line_buf[256], ename[80], uname[80], gname[80];
-	int n, ln=0, uid, gid, dummy, len;
+	char line_buf[256], *p1, *p2;
+	int ln=0, gid, len;
 
-	/* prepare the filename PATH/.UIDGID */
-	len = strlen(e2c->curr_path);
-	strncpy(fname, e2c->curr_path, 256);
-	if (fname[len-1] != '/') {
-		fname[len++] = '/';
-	}
-	strncpy((fname + len), e2c->uid_file, 256-len);
-	
 	/* try to open the file or return */
-	fp = fopen(fname, "r");
+	fp = fopen(e2c->grp_file, "r");
 	if(!fp){
 		return 0;
 	}
 	
+	if (e2c->verbose)
+		printf("Reading username information from %s\n", e2c->grp_file);
+
 	/* iterate over the lines in the device file */
 	while (fgets(line_buf, 256, fp) != 0) {
 		ln++;  /* count the line numbers */
@@ -80,67 +77,27 @@ int read_uids(e2i_ctx_t *e2c, uiddb_t *db)
 			continue;
 		}
 		
-		uid = gid = 0;
-		n = sscanf(line_buf, " %79s %d %d", ename, &uid, &gid);
+		do {
+			gid = -1;
+			p1  = strchr(line_buf, ':'); /* the : between group and password */
+			len = p1 - line_buf;
+			if (len > 79 || len < 1) break;
+			*p1 = '\0'; /* terminate name */
+			p1 = strchr(p1+1,':'); /* points to : before GID */
+			if (!p1) break;
+			p2 = strchr(++p1,':'); /* points to the colon after the GID */
+			if (!p2) break;
+			*p2++ = '\0'; /* delete : and point to the userlist if any */
+			gid = atoi(p1);
+		} while(0);
 		
-		/* check for comment lines */
-		if (ename[0] == '\n' || line_buf[0] == '#' ) continue;
-
-		/* how many parameters were given ? */
-		if (n < 2 || n > 3) {
-			n = sscanf(line_buf, " %79s %79s %79s", ename, uname, gname);
-			if (n < 2 || n > 3) {
-				fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
-					e2c->curr_path, ln, fname);
-				return -1;
-			}
-			/* fetch uid and gid from passwd */
-			if (!uiddb_search(e2c->passwd, uname, &uid, &gid)) {
-				fprintf(stderr, 
-						"Username %s from %s line %d not found in '%s'\n",
-						uname, fname, ln, e2c->pw_file);
-				return -1;
-			}
-			if (n == 3){
-				if (!uiddb_search(e2c->group, gname, &dummy, &gid)) {
-					fprintf(stderr, 
-						"Group %s from %s line %d not found in '%s'\n",
-						gname, fname, ln, e2c->grp_file);
-					fclose(fp);
-					return -1;
-				}
-			}
+		if (gid < 0) {
+			fprintf(stderr, "Bad entry in %s, line %d : %s, %d\n",
+				e2c->grp_file, ln, line_buf, gid);
+			return -1;
 		}
-		uiddb_add(db, ename, uid, gid);		
+		uiddb_add(e2c->group, line_buf, 0, gid);
 	}
-	return 0;
-}				
-
-int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino)
-{
-	struct ext2_inode inode;
-	int uid, gid, ret;
-	
-	/* read the inode, alter uid, gid  and write it back */
-	ret = ext2fs_read_inode(e2c->fs, e2ino, &inode);
-	E2_ERR(ret, "Ext2 read Inode Error", "");
-
-	/* do the root squash */
-	if (! e2c->preserve_uidgid) {
-		inode.i_uid = e2c->default_uid;
-		inode.i_gid = e2c->default_gid;
-	}
-
-	/* if the filename is mentioned in .UIDGID we must change the owner */
-	if (uiddb_search(e2c->uid_db, fname, &uid, &gid)){
-		if (e2c->verbose)
-			printf("Changing UID and GID for %s (%d:%d)\n", fname, uid, gid);
-		inode.i_uid = uid;
-		inode.i_gid = gid;
-	}		
-		
-	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
-	E2_ERR(ret, "Ext2 write Inode Error", "");
-	
 	return 0;
 }
+

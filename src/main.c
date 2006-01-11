@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: main.c,v 1.24 2005/05/25 18:06:51 chris2511 Exp $ 
+ * $Id: main.c,v 1.25 2006/01/11 21:57:27 chris2511 Exp $ 
  *
  */                           
 
@@ -59,6 +59,7 @@ static void usage(char *name)
 			"-n  do not create the filesystem, use an existing one\n"
 			"-D  change name of the file .DEVICES\n"
 			"-P  filename of the passwd file\n"
+			"-G  filename of the group file\n"
 			"-U  change name of the file .UIDGID file\n\n",
 			name);
 }
@@ -82,10 +83,11 @@ long getsize(const char *t)
 		case 'K': len--;
 	}
 	size = strtol(t, &p, 10) * f;
-		fprintf(stderr ,"malformed size string: '%s', p-t:%d, len:%d, Size:%ld\n",
-				t, (p-t), len, size);
 		
 	if (p - t != len) {
+		fprintf(stderr,
+				"malformed size string: '%s', p-t:%d, len:%d, Size:%ld\n",
+				t, (p-t), len, size);
 		size = -1;
 	}
 	return size;
@@ -96,10 +98,12 @@ int main(int argc, char *argv[] )
 	int ret = 0, c, create=1;
 	long ksize=4096;
 	char *e2fsfile = NULL;
-	char passwd_file[80];
+	char passwd_file[256];
+	char group_file[256];
 	e2i_ctx_t e2c;
 	struct cnt_t cnt;
 	uiddb_t passwd;
+	uiddb_t group;
 	
 	/* initialize ext2fs error table */
 	init_ext2_err_tbl();
@@ -118,7 +122,7 @@ int main(int argc, char *argv[] )
 	
 	/* handle arguments and options */
 	do {
-		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:");
 		switch (c) {
 			case 'v': e2c.verbose = 1; break;
 			case 'p': e2c.preserve_uidgid = 1; break;
@@ -132,6 +136,7 @@ int main(int argc, char *argv[] )
 			case 'D': e2c.dev_file = optarg; break;
 			case 'U': e2c.uid_file = optarg; break;
 			case 'P': e2c.pw_file = optarg; break;
+			case 'G': e2c.grp_file = optarg; break;
 		}
 			 
 	} while (c >= 0);
@@ -143,10 +148,16 @@ int main(int argc, char *argv[] )
 	}
 	/* Setup passwd file */
 	if (e2c.pw_file == NULL) {
-		strncpy(passwd_file, e2c.curr_path, 69);
+		strncpy(passwd_file, e2c.curr_path, 256-11);
 		strcat(passwd_file, "/etc/passwd");
 		e2c.pw_file = passwd_file;
 	}
+    /* Setup group file */
+    if (e2c.grp_file == NULL) {
+        strncpy(group_file, e2c.curr_path, 256-10);
+        strcat(group_file, "/etc/group");
+        e2c.grp_file = group_file;
+    }
 	/* call mke2fs to create the initial filesystem */
 	if (create) {
 		ret = mke2fs(e2fsfile, ksize);
@@ -163,6 +174,10 @@ int main(int argc, char *argv[] )
 	e2c.passwd = &passwd;
 	uiddb_init(e2c.passwd);
 	read_passwd(&e2c); 
+	
+	e2c.group = &group;
+	uiddb_init(e2c.group);
+	read_group(&e2c);
 	
 	/* reserve memory for the file-copy */
 	e2c.cp_buf = malloc(BUF_SIZE);
@@ -186,14 +201,15 @@ int main(int argc, char *argv[] )
 	
 	/* Release the passwd list */
 	uiddb_free(e2c.passwd);
+	uiddb_free(e2c.group);
 	
 	free(e2c.cp_buf);
 	
 	/* write the filesystem to the image */
 	ext2fs_flush(e2c.fs);
-
+#ifdef MALLOC_DEBUG
 	list_table();
-	
+#endif	
 	if (ret) return ret;
 	
 	ret = ext2fs_close(e2c.fs);

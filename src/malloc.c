@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "e2fsimage.h"
 
 #define MAX_E 1024
 #define MD "MEMORY_DEBUG: "
@@ -7,6 +8,8 @@
 #undef malloc
 #undef realloc
 #undef free
+
+#ifdef MALLOC_DEBUG
 
 struct {
 	void *addr;
@@ -29,10 +32,10 @@ void *__malloc(int size, char *fil, char * func, int line)
 	return p;
 }
 
-void *__realloc(unsigned char *p, int size, char *fil, char * func, int line)
+void *__realloc(void *p, int size, char *fil, char * func, int line)
 {
 	int i;
-	unsigned char *p1;
+	void *p1;
 	
 	for (i=0; i<MAX_E;i++)
 		if (l[i].addr == p)
@@ -53,8 +56,9 @@ void __free(void *p, char *fil, char * func, int line)
 		if (l[i].addr == p)
 			break;
 	
-	if(i==1024) {
-	//:	printf(MD "[%s:%s:%d] Unbalanced free()\n", fil, func, line);
+	if(i==MAX_E) {
+		/* either we crash below:-), or this chunk was malloced
+		 * somewhere else */
 		return;
 	}
 	l[i].addr = 0;
@@ -75,3 +79,5 @@ void list_table()
 		printf(MD "Chunk (%d) of %d bytes at %p\n", i, l[i].size, l[i].addr);
 	}
 }
+
+#endif
