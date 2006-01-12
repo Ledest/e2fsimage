@@ -1,7 +1,7 @@
 #
 # vi: set sw=4 ts=4: 
 #
-# $Id: Makefile,v 1.13 2006/01/12 17:31:13 chris2511 Exp $
+# $Id: Makefile,v 1.14 2006/01/12 20:22:32 chris2511 Exp $
 #
 ######################################################################
 
@@ -11,7 +11,7 @@ SUBDIRS=src man
 all: Local.mak
 install: all
 all install clean: 
-	for x in $(SUBDIRS); do $(MAKE) CFLAGS="$(CFLAGS)" -C $$x $@; done
+	for x in $(SUBDIRS); do $(MAKE) CFLAGS="$(CFLAGS)" -C $$x $@ ||exit 1; done
 
 Local.mak: configure
 	./$<
