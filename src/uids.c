@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uids.c,v 1.4 2006/01/12 08:38:53 chris2511 Exp $ 
+ * $Id: uids.c,v 1.5 2006/01/12 17:31:14 chris2511 Exp $ 
  *
  */                           
 
@@ -92,6 +92,7 @@ int read_uids(e2i_ctx_t *e2c, uiddb_t *db)
 			if (n < 2 || n > 3) {
 				fprintf(stderr, "Bad entry in %s, line %d (%s)\n",
 					e2c->curr_path, ln, fname);
+                fclose(fp);
 				return -1;
 			}
 			/* fetch uid and gid from passwd */
@@ -99,6 +100,7 @@ int read_uids(e2i_ctx_t *e2c, uiddb_t *db)
 				fprintf(stderr, 
 						"User name %s from %s line %d not found in '%s'\n",
 						uname, fname, ln, e2c->pw_file);
+                fclose(fp);
 				return -1;
 			}
 			if (n == 3){
@@ -113,6 +115,7 @@ int read_uids(e2i_ctx_t *e2c, uiddb_t *db)
 		}
 		uiddb_add(db, ename, uid, gid);		
 	}
+    fclose(fp);
 	return 0;
 }				
 

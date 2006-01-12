@@ -30,6 +30,7 @@ err() {
   echo ERROR: $1
   echo 
   err_occ=Y
+  exit 1
 }
 
 #adds an includedir to $CF
@@ -74,7 +75,7 @@ search_includes() {
 search_lib() {
   for dbn in $@; do
     for dir in ${DIRS};  do
-      for libdir in /lib "";  do
+      for libdir in /lib /lib64 "";  do
         for suffix in so dylib obj a; do
           if test -r ${dir}${libdir}/lib${dbn}.${suffix}; then
             add_lib ${dir}${libdir} ${dbn};
@@ -110,6 +111,7 @@ if gcc $LDIRS $CF $CFLAGS conftest.c $LIBS -o conftest &>conftest.log ; then
 else
   err "Unable to compile a minimal application look at 'conftest.log' for errors"
  echo gcc $LIBS $LDIRS $CF $CFLAGS conftest.c -o conftest >>conftest.log
+ exit 1
 fi
 
 
@@ -152,11 +154,14 @@ if test ! -z "${mak}"; then
   echo A usable "make" executable was found in ${mak}
 else
   echo No usable "make" executable found.
+  exit 1
 fi
 echo
 
 if test "x${err_occ}" = "xY"; then
   echo
   echo An error occured. Please edit 'Local.mak' manually if compiling fails.
+  exit 1
 fi
 
+exit 0
