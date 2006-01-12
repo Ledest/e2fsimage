@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: uids.c,v 1.3 2006/01/11 21:57:27 chris2511 Exp $ 
+ * $Id: uids.c,v 1.4 2006/01/12 08:38:53 chris2511 Exp $ 
  *
  */                           
 
@@ -97,14 +97,14 @@ int read_uids(e2i_ctx_t *e2c, uiddb_t *db)
 			/* fetch uid and gid from passwd */
 			if (!uiddb_search(e2c->passwd, uname, &uid, &gid)) {
 				fprintf(stderr, 
-						"Username %s from %s line %d not found in '%s'\n",
+						"User name %s from %s line %d not found in '%s'\n",
 						uname, fname, ln, e2c->pw_file);
 				return -1;
 			}
 			if (n == 3){
 				if (!uiddb_search(e2c->group, gname, &dummy, &gid)) {
 					fprintf(stderr, 
-						"Group %s from %s line %d not found in '%s'\n",
+						"Group name %s from %s line %d not found in '%s'\n",
 						gname, fname, ln, e2c->grp_file);
 					fclose(fp);
 					return -1;
