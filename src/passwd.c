@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: passwd.c,v 1.3 2006/01/11 22:08:58 chris2511 Exp $ 
+ * $Id: passwd.c,v 1.4 2006/02/04 09:42:41 chris2511 Exp $ 
  *
  */                           
 
@@ -96,10 +96,12 @@ int read_passwd(e2i_ctx_t *e2c)
 		if (gid <0 || uid <0 ) {
 			fprintf(stderr, "Bad entry in %s, line %d : %s, %d, %d\n",
 				e2c->pw_file, ln, line_buf, uid, gid);
+			fclose(fp);
 			return -1;
 		}
 		uiddb_add(e2c->passwd, line_buf, uid, gid);		
 	}
+	fclose(fp);
 	return 0;
 }				
 

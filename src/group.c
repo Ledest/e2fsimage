@@ -37,7 +37,7 @@
  * email: christian@hohnstaedt.de
  * email: jtate@rpath.com
  *
- * $Id: group.c,v 1.1 2006/01/11 21:57:27 chris2511 Exp $ 
+ * $Id: group.c,v 1.2 2006/02/04 09:42:41 chris2511 Exp $ 
  *
  */                           
 
@@ -94,10 +94,12 @@ int read_group(e2i_ctx_t *e2c)
 		if (gid < 0) {
 			fprintf(stderr, "Bad entry in %s, line %d : %s, %d\n",
 				e2c->grp_file, ln, line_buf, gid);
+			fclose(fp);
 			return -1;
 		}
 		uiddb_add(e2c->group, line_buf, 0, gid);
 	}
+	fclose(fp);
 	return 0;
 }
 
