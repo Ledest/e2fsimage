@@ -56,6 +56,8 @@ int e2symlink(e2i_ctx_t *e2c)
 	struct ext2_inode inode;
 	int ret, written;
 	char buf[SYM_BUF_SIZE];
+	char * root_ptr;
+	char *tmpptr;
 	off_t size = 0;
 	struct stat s;
 	
@@ -74,6 +76,30 @@ int e2symlink(e2i_ctx_t *e2c)
 	
 	/* populate the new inode */
 	ext2fs_inode_alloc_stats(e2c->fs, e2ino, 1);
+
+	/* open the source file */
+	size = readlink(e2c->curr_path, buf, SYM_BUF_SIZE);
+	if (size < 0 || size >= SYM_BUF_SIZE) {
+		fprintf(stderr, "Error reading symlink '%s': %s\n", e2c->curr_path, strerror(errno));
+		return -1;
+	}
+	
+	e2c->cnt->softln++;
+
+	if (e2c->root_path != NULL) { 
+	    root_ptr = strstr(buf, e2c->root_path);
+    	    if (root_ptr != buf) {
+		tmpptr = buf;
+	    } else {
+		tmpptr = buf + strlen(e2c->root_path);
+	    }
+	    strcpy(buf, tmpptr);
+	}
+
+	if (e2c->verbose)
+		printf("Copying symlink %s -> %s\n",e2c->curr_path,buf);
+	
+	s.st_size = strlen(buf);	
 	
 	init_inode(e2c, &inode, &s);
 
@@ -91,12 +117,23 @@ int e2symlink(e2i_ctx_t *e2c)
 		return -1;
 	}
 	
-	if (e2c->verbose)
-		printf("Copying symlink %s\n",e2c->curr_path);
-	
 	e2c->cnt->softln++;
+
+	if (e2c->root_path != NULL) { 
+	    root_ptr = strstr(buf, e2c->root_path);
+    	    if (root_ptr != buf) {
+		tmpptr = buf;
+	    } else {
+		tmpptr = buf + strlen(e2c->root_path);
+	    }
+	    strcpy(buf, tmpptr);
+	}
+
+	if (e2c->verbose)
+		printf("Copying symlink %i %i %s -> %s\n",strlen(buf), size, e2c->curr_path,buf);
 	
-	ret = ext2fs_file_write(e2file, buf, size, &written);
+	
+	ret = ext2fs_file_write(e2file, buf, strlen(buf), &written);
 	if (ret) {
 		fprintf(stderr, "Error writing ext2 symlink (%s)\n", error_message(ret));
 		ext2fs_file_close(e2file);
@@ -106,7 +143,7 @@ int e2symlink(e2i_ctx_t *e2c)
 	ext2fs_file_close(e2file);
 	
 	/* if this sizes differ its an inconsistency in the base filesystem */
-	if (size != written) {
+	if (strlen(buf) != written) {
 		fprintf(stderr, "Error 'size matters' Size:%ld, Written:%d\n", size, written);
 		return -1;
 	}

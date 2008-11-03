@@ -129,7 +129,7 @@ int main(int argc, char *argv[] )
 			case 'u': e2c.default_uid = atoi(optarg); break;
 			case 'g': e2c.default_gid = atoi(optarg); break;
 			case 'f': e2fsfile = optarg; break;
-			case 'd': e2c.curr_path = optarg; break;
+			case 'd': e2c.root_path = e2c.curr_path = optarg; break;
 			case 'h': usage(argv[0]); return 0;
 			case 'n': create = 0; break;
 			case 's': ksize = getsize(optarg); break;

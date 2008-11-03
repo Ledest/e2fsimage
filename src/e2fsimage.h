@@ -113,6 +113,7 @@ typedef struct {
 	ext2_filsys fs;
 	ext2_ino_t curr_e2dir;
 	const char *curr_path;
+	const char *root_path;
 
 	inodb_t *ino_db;
 	uiddb_t *uid_db;
