@@ -46,7 +46,7 @@ add_include() {
 
 add_lib() {
   LIBS="$LIBS -l$2"
-  for _libs in -L/usr/lib ${LDIRS}; do
+  for _libs in -L/usr/lib64 -L/usr/lib ${LDIRS}; do
     if test "-L$1" = "${_libs}"; then
       return 0
     fi
@@ -75,11 +75,11 @@ search_includes() {
 search_lib() {
   for dbn in $@; do
     for dir in ${DIRS};  do
-      for libdir in /lib /lib64 "";  do
+      for libdir in /lib64 /lib "";  do
         for suffix in so dylib obj a; do
           if test -r ${dir}${libdir}/lib${dbn}.${suffix}; then
             add_lib ${dir}${libdir} ${dbn};
-	    echo Found: lib${dbn}.${suffix} at ${dir}/lib
+	    echo Found: lib${dbn}.${suffix} at ${dir}${libdir}
             return 0
 	  fi
         done
