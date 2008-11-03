@@ -86,8 +86,8 @@ int mke2fs(const char *fname, int size)
 		if (fd) dup2(fd, 1);
 		setenv("PATH", buf, 1);	
 		
-		execlp("mkfs.ext2", "mkfs.ext2", "-F", fname, NULL);
-		execlp("mke2fs", "mke2fs", "-F", fname, NULL);
+		execlp("mkfs.ext2", "mkfs.ext2", "-F", fname, "-b", "1024", NULL);
+		execlp("mke2fs", "mke2fs", "-F", fname,  "-b", "1024", NULL);
 		fprintf(stderr,"Could not execute 'mkfs.ext2' or 'mke2fs'\n");
 	}
 	waitpid(pid, &status, 0);
