@@ -54,6 +54,7 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	struct stat s;
 	const char *dname;
 	ext2_ino_t nd;
+	struct ext2_inode inode;
 	
 	ret = lstat(e2c->curr_path, &s);
 	ERRNO_ERR(ret,"Could not 'stat': ", e2c->curr_path);
@@ -84,7 +85,17 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	/* lookup the inode of the new directory if requested */
 	ret = ext2fs_lookup(e2c->fs, e2c->curr_e2dir, dname, strlen(dname), 0, &nd);
 	E2_ERR(ret, "Could not Ext2-lookup: ", dname);
-	
+	// fix permissions
+	ret = ext2fs_read_inode(e2c->fs, nd, &inode);
+	E2_ERR(ret, "Ext2 read Inode Error", "");
+
+	inode.i_uid = s.st_uid;
+	inode.i_gid = s.st_gid;
+	inode.i_mode = s.st_mode;
+	ret = ext2fs_write_inode(e2c->fs, nd, &inode);
+	E2_ERR(ret, "Ext2 write Inode Error", "");
+
+
 	modinode(e2c, dname, nd);
 	
 	if (newdir) {

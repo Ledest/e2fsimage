@@ -113,7 +113,7 @@ int e2cp(e2i_ctx_t *e2c)
 
 	/* if this sizes differ its an inconsistency in the base filesystem */
 	if (s.st_size != size) {
-		fprintf(stderr, "Error 'size matters' Inode:%ld, File:%ld\n", s.st_size, size);
+		fprintf(stderr, "Error 'size matters' for %s Inode:%ld, File:%ld\n",e2c->curr_path, s.st_size, size);
 		return -1;
 	}
 	
