@@ -84,7 +84,7 @@ int e2symlink(e2i_ctx_t *e2c)
 		fprintf(stderr, "Error reading symlink '%s': %s\n", e2c->curr_path, strerror(errno));
 		return -1;
 	}
-	
+	buf[size] = '\0';
 	e2c->cnt->softln++;
 
 	if (e2c->root_path != NULL) { 
