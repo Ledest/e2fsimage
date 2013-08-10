@@ -86,7 +86,7 @@ long getsize(const char *t)
 		
 	if (p - t != len) {
 		fprintf(stderr,
-				"malformed size string: '%s', p-t:%d, len:%d, Size:%ld\n",
+				"malformed size string: '%s', p-t:%zd, len:%d, Size:%ld\n",
 				t, (p-t), len, size);
 		size = -1;
 	}

@@ -52,8 +52,9 @@ int e2cp(e2i_ctx_t *e2c)
 	ext2_file_t e2file;
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
-	int ret, b_read, b_wrote;
-	char *ptr, *ptr1;
+	int ret, b_read;
+	unsigned b_wrote;
+	unsigned char *ptr, *ptr1;
 	off_t size = 0;
 	struct stat s;
 	FILE *fp;

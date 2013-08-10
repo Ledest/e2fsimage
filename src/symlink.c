@@ -54,7 +54,8 @@ int e2symlink(e2i_ctx_t *e2c)
 	ext2_file_t e2file;
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
-	int ret, written;
+	int ret;
+	unsigned written;
 	char buf[SYM_BUF_SIZE];
 	char * root_ptr;
 	char *tmpptr;
@@ -130,7 +131,7 @@ int e2symlink(e2i_ctx_t *e2c)
 	}
 
 	if (e2c->verbose)
-		printf("Copying symlink %i %i %s -> %s\n",strlen(buf), size, e2c->curr_path,buf);
+		printf("Copying symlink %zu %ld %s -> %s\n", strlen(buf), size, e2c->curr_path, buf);
 	
 	
 	ret = ext2fs_file_write(e2file, buf, strlen(buf), &written);
