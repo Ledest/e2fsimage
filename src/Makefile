@@ -15,7 +15,7 @@ OBJS=main.o copy.o symlink.o util.o mkdir.o \
 unused_OBJ=initfs.o
 
 e2fsimage: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) 
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c Makefile ../Local.mak e2fsimage.h
 	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
@@ -24,6 +24,4 @@ clean:
 	rm -f $(OBJS) e2fsimage
 
 install:
-	mkdir -p $(basedir)$(prefix)/bin
-	cp  e2fsimage $(basedir)$(prefix)/bin
-	$(STRIP) $(basedir)$(prefix)/bin/e2fsimage
+	install -pD -m 0755 e2fsimage $(DESTDIR)$(prefix)/bin/e2fsimage

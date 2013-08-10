@@ -6,18 +6,16 @@
 
 sinclude ../Local.mak
 
-MANPAGES= e2fsimage.1.gz
+MANPAGES= e2fsimage.1
 
 all: $(MANPAGES)
 
-%.1.gz:%.man
-	cat $< | sed "s/_VERSION_/$(VERSION)/" | \
-		sed "s/_DATE_/`date '+%B %G'`/" | gzip -9 >$@
+%.1:%.man
+	sed "s/_VERSION_/$(VERSION)/;s/_DATE_/$(date '+%B %G')/" $< > $@
 
 clean:
 	rm -f $(MANPAGES)
-	
+
 install:
-	install -d $(basedir)$(prefix)/$(mandir)/man1
-	install $(MANPAGES) $(basedir)$(prefix)/$(mandir)/man1
-	
+	install -d -m 0755 $(DESTDIR)$(mandir)/man1
+	install -p -m 0644 $(MANPAGES) $(DESTDIR)$(mandir)/man1/
