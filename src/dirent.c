@@ -163,7 +163,12 @@ int e2filetype_select(e2i_ctx_t *e2c)
 	struct stat s;  
 	ext2_ino_t newe2dir;
 	int ret;
-	
+
+	if (access(e2c->curr_path, R_OK) && errno == EACCES) {
+		fprintf(stderr, "access: %s: '%s'\n", strerror(errno), e2c->curr_path);
+		return e2c->unaccessible;
+	}
+
 	lstat(e2c->curr_path, &s);
 
 	ret = e2check_hardlink(e2c, s.st_ino);

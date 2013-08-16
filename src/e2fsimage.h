@@ -129,6 +129,7 @@ typedef struct {
 	const char *grp_file;
 	unsigned char *cp_buf;
 	struct cnt_t *cnt;
+	int unaccessible;
 } e2i_ctx_t;
 
 int mke2fs(const char *fname, int size);

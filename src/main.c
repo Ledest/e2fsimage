@@ -117,12 +117,14 @@ int main(int argc, char *argv[] )
 	e2c.curr_path = NULL;
 	e2c.cnt = &cnt;
 	cnt.dir = cnt.regf = cnt.softln = cnt.hardln = cnt.specf = 0; 
-		
+
+	e2c.unaccessible = -1;
+
 	printf("%s - Version: %s\n",  argv[0], VER);
 	
 	/* handle arguments and options */
 	do {
-		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:S");
 		switch (c) {
 			case 'v': e2c.verbose = 1; break;
 			case 'p': e2c.preserve_uidgid = 1; break;
@@ -137,6 +139,7 @@ int main(int argc, char *argv[] )
 			case 'U': e2c.uid_file = optarg; break;
 			case 'P': e2c.pw_file = optarg; break;
 			case 'G': e2c.grp_file = optarg; break;
+			case 'S': e2c.unaccessible = 0; break;
 		}
 			 
 	} while (c >= 0);
