@@ -46,6 +46,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+int filter(const struct dirent *d)
+{
+	const char *n = d->d_name;
+
+	/* skip . and .. */
+	return !(n[0] == '.' &&
+		 (n[1] == '\0' ||
+		  (n[1] == '.' && n[2] == '\0')));
+}
+
 /*
  * Scan a directory and copy all the files to the e2c->curr_e2dir
  * using scandir()
@@ -61,7 +71,7 @@ int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 	memcpy(&e2c, e2c_old, sizeof(e2i_ctx_t));
 	e2c.curr_e2dir = newdir;
 
-	ret = scandir(e2c.curr_path, &namelist, 0, 0);
+	ret = scandir(e2c.curr_path, &namelist, filter, NULL);
 	if (ret < 0) {
 		perror("scandir");
 		return -1;
@@ -98,8 +108,6 @@ int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 		strncpy(ppath, namelist[i]->d_name, 256 - len);
 		free(namelist[i]);
 		/* skip . and .. */
-		if (!strncmp(".", ppath, 2)) continue;
-		if (!strncmp("..", ppath, 3)) continue;
 		if (!strncmp(e2c.uid_file, ppath, strlen(e2c.uid_file))) continue;
 		/* is there a special file (.DEVICES) */
 		if (!strncmp(e2c.dev_file, ppath, strlen(e2c.dev_file))) {
