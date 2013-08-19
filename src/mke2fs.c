@@ -47,53 +47,65 @@
 #include <wait.h>
 #include <string.h>
 
-int mke2fs(const char *fname, int size)
+int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, int size)
 {
 	int pid, status, fd;
-	FILE *fp;
-	char *buf, *bp ;
-	char *newpath = ":/sbin:/usr/sbin:/usr/local/sbin";
-	
+	char buf[4096];
 	/* open the target filesystem image */
-	fp = fopen(fname, "wb+");
+	FILE *fp = fopen(fname, "wb+");
+
 	if (!fp) {
 		perror("Error opening file");
 		return 1;
 	}
 
-	/* fill the image with zeros */
-	buf = malloc(1024);
-	if (!buf) {
-		fclose(fp);
-		return -1;
-	}
-	memset(buf, 0, 1024 );
+	memset(buf, 0, sizeof(buf));
 
-	fseek (fp,(size-1)*1024,SEEK_SET);
-	fwrite (buf,1024,1,fp);
+	fseek(fp, ((size + 3) / 4 - 1) * 4096, SEEK_SET);
+	fwrite(buf, sizeof(buf), 1, fp);
 	fclose(fp);
 
 	/* redirect stdout of mke2fs to dev/null */
 	fd = open("/dev/null", O_WRONLY);
-	
-	/* add /sbin, /usr/sbin and /usr/local/sbin to the PATH */
-	bp = getenv("PATH");
-	strncpy(buf, bp, 1023 - strlen(newpath));
-	strcat(buf, newpath ); 
-	
+
 	pid = fork();
 	if (!pid) {
+		const char newpath[] = ":/sbin:/usr/sbin:/usr/local/sbin";
+		char const *argv[11] = {"mke2fs", "-q", "-F"};
+		int i = 3;
+		/* add /sbin, /usr/sbin and /usr/local/sbin to the PATH */
+		char *bp = getenv("PATH");
+
+		strncpy(buf, bp, sizeof(buf) - sizeof(newpath));
+		strcat(buf, newpath);
+
+		if (label) {
+			argv[i++] = "-L";
+			argv[i++] = label;
+		}
+		if (fstype) {
+			argv[i++] = "-t";
+			argv[i++] = fstype;
+		}
+		if (bsize) {
+			char b[16];
+			if (sprintf(b, "%d", bsize) > 0) {
+				argv[i++] = "-b";
+				argv[i++] = b;
+			}
+		}
+		argv[i] = fname;
+		argv[i + 1] = NULL;
+
 		if (fd) dup2(fd, 1);
-		setenv("PATH", buf, 1);	
-		
-		execlp("mkfs.ext2", "mkfs.ext2", "-F", fname, "-b", "1024", NULL);
-		execlp("mke2fs", "mke2fs", "-F", fname,  "-b", "1024", NULL);
-		fprintf(stderr,"Could not execute 'mkfs.ext2' or 'mke2fs'\n");
+		setenv("PATH", buf, 1);
+
+		execvp("mke2fs", (char* const*)argv);
+		fputs("Could not execute 'mke2fs'\n", stderr);
 	}
 	waitpid(pid, &status, 0);
 	if (fd) close(fd);
-	free(buf);
-	
+
 	if (WEXITSTATUS(status) !=0 ) {
 		fprintf(stderr, "mke2fs failed with return code %d\n", WEXITSTATUS(status));
 		return -1;
