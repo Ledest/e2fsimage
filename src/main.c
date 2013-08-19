@@ -48,11 +48,15 @@ static void usage(char *name)
 {
 	printf("%s [-f imgfile] [-d rootdir] [-u uid] [-g gid] [-s size] "
 			"[-v] [-n] [-D devicefile]\n\n"
+			"-t  filesystem type\n"
+			"-b  block size\n"
+			"-L  volume label\n"
 			"-f  filesystem image file\n"
 			"-d  root directory to be copied to the image\n"
 			"-u  uid to use instead of the real one\n"
 			"-g  gid to use instead of the real one\n"
 			"-v  be verbose\n"
+			"-S  skip unaccessible files and dirs\n"
 			"-s  size of the filesystem\n"
 			"-D  device filename\n"
 			"-p  preserve uid and gid\n"
@@ -97,7 +101,10 @@ int main(int argc, char *argv[] )
 {
 	int ret = 0, c, create=1;
 	long ksize=4096;
+	int bsize = 0;
 	char *e2fsfile = NULL;
+	char *fstype = NULL;
+	char *label = NULL;
 	char passwd_file[256];
 	char group_file[256];
 	e2i_ctx_t e2c;
@@ -124,7 +131,7 @@ int main(int argc, char *argv[] )
 	
 	/* handle arguments and options */
 	do {
-		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:S");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:St:234b:L:");
 		switch (c) {
 			case 'v': e2c.verbose = 1; break;
 			case 'p': e2c.preserve_uidgid = 1; break;
@@ -135,6 +142,12 @@ int main(int argc, char *argv[] )
 			case 'h': usage(argv[0]); return 0;
 			case 'n': create = 0; break;
 			case 's': ksize = getsize(optarg); break;
+			case 'b': bsize = atoi(optarg); break;
+			case 't': fstype = optarg; break;
+			case '2': fstype = "ext2"; break;
+			case '3': fstype = "ext3"; break;
+			case '4': fstype = "ext4"; break;
+			case 'L': label = optarg; break;
 			case 'D': e2c.dev_file = optarg; break;
 			case 'U': e2c.uid_file = optarg; break;
 			case 'P': e2c.pw_file = optarg; break;
@@ -163,7 +176,7 @@ int main(int argc, char *argv[] )
     }
 	/* call mke2fs to create the initial filesystem */
 	if (create) {
-		ret = mke2fs(e2fsfile, ksize);
+		ret = mke2fs(e2fsfile, fstype, label, bsize, ksize);
 		if (ret !=0 ) return ret;
 	}
 	
