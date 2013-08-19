@@ -3,6 +3,9 @@
 e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .SH SYNOPSIS
 .B e2fsimage
+.RI [ -t\ fs-type ]
+.RI [ -b\ block-size ]
+.RI [ -L\ volume-label ]
 .RI [ -f\ imgfile ]
 .RI [ -d\ rootdir ]
 .RI [ -u\ uid ]
@@ -12,6 +15,7 @@ e2fsimage \- create and populate an ext2 filesystem image as non-root user
 .RI [ -P\ file ]
 .RI [ -p ]
 .RI [ -v ]
+.RI [ -S ]
 .RI [ -n ]
 .RI [ -s\ size ]
 .SH DESCRIPTION
@@ -58,6 +62,24 @@ have your suid-root program.
 It is also not mandatory to have the rootdir on an ext2 filesystem.
 
 .SH OPTIONS
+
+.TP
+.BI \-t\  fs-type
+Specify the filesystem type (i.e., ext2, ext3, ext4, etc.) that is to be created.
+See
+.BR mke2fs(2).
+
+.TP
+.BI \-b\  block-size
+Specify the size of blocks in bytes. Valid block-size values are  1024, 2048 and
+4096 bytes  per  block.
+See
+.BR mke2fs(2).
+
+.TP
+.BI \-L\  volume-label
+Set the volume label for the filesystem to volume-label. The maximum length of
+the volume label is 16 bytes.
 
 .TP
 .BI \-d\  rootdir
@@ -143,6 +165,10 @@ uids look at the section
 .TP
 .BI \-v
 Be more verbose.
+
+.TP
+.BI \-S
+Skip unaccessible files and dirs.
 
 .SH DEVICES
 .LP
