@@ -136,7 +136,7 @@ int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino)
 
 	/* if the filename is mentioned in .UIDGID we must change the owner */
 	if (uiddb_search(e2c->uid_db, fname, &uid, &gid)){
-		if (e2c->verbose)
+		if (verbose)
 			printf("Changing UID and GID for %s (%d:%d)\n", fname, uid, gid);
 		inode.i_uid = uid;
 		inode.i_gid = gid;

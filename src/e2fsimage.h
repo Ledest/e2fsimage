@@ -121,7 +121,6 @@ typedef struct {
 	uiddb_t *group;
 	int default_uid;
 	int default_gid;
-	int verbose;
 	int preserve_uidgid;
 	const char *dev_file;
 	const char *uid_file;
@@ -168,4 +167,8 @@ int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino);
 
 int read_passwd(e2i_ctx_t *e2c);
 int read_group(e2i_ctx_t *e2c);
+
+extern int verbose;
+extern char const *excluded[];
+extern unsigned short excluded_num;
 #endif

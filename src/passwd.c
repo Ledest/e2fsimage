@@ -60,7 +60,7 @@ int read_passwd(e2i_ctx_t *e2c)
 		return 0;
 	}
 	
-	if (e2c->verbose)
+	if (verbose)
 		printf("Reading username information from %s\n", e2c->pw_file);
 
 	/* iterate over the lines in the device file */

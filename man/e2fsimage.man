@@ -93,6 +93,10 @@ This can be overwritten with the
 options respectively
 
 .TP
+.BI \-e\  pattern
+exclude files based upon pattern
+
+.TP
 .BI \-D\  devicefile
 The devicefile contains all special devices to be created, see
 .IR DEVICES .

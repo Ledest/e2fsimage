@@ -118,7 +118,7 @@ int e2cp(e2i_ctx_t *e2c)
 		return -1;
 	}
 	
-	if (e2c->verbose)
+	if (verbose)
 		printf("Copying file %s\n", e2c->curr_path);
 	
 	e2c->cnt->regf++;

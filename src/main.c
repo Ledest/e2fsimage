@@ -53,6 +53,7 @@ static void usage(char *name)
 			"-L  volume label\n"
 			"-f  filesystem image file\n"
 			"-d  root directory to be copied to the image\n"
+			"-e  exclude dir/file\n"
 			"-u  uid to use instead of the real one\n"
 			"-g  gid to use instead of the real one\n"
 			"-v  be verbose\n"
@@ -69,7 +70,7 @@ static void usage(char *name)
 }
 
 /* return the size in Kilobyte */
-long getsize(const char *t)
+static long getsize(const char *t)
 {
 	int len, f;
 	char c, *p;
@@ -95,6 +96,16 @@ long getsize(const char *t)
 		size = -1;
 	}
 	return size;
+}
+
+int verbose;
+char const *excluded[1024];
+unsigned short excluded_num;
+
+static void add_exclude(const char *s)
+{
+	if (excluded_num < sizeof(excluded) / sizeof(excluded[0]))
+		excluded[excluded_num++] = s;
 }
 
 int main(int argc, char *argv[] )
@@ -125,15 +136,17 @@ int main(int argc, char *argv[] )
 	e2c.cnt = &cnt;
 	cnt.dir = cnt.regf = cnt.softln = cnt.hardln = cnt.specf = 0; 
 
+	verbose = 0;
 	e2c.unaccessible = -1;
+	excluded_num = 0;
 
 	printf("%s - Version: %s\n",  argv[0], VER);
 	
 	/* handle arguments and options */
 	do {
-		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:St:234b:L:");
+		c = getopt(argc, argv, "vnhpf:d:u:g:s:D:U:P:G:St:234b:L:e:");
 		switch (c) {
-			case 'v': e2c.verbose = 1; break;
+			case 'v': verbose = 1; break;
 			case 'p': e2c.preserve_uidgid = 1; break;
 			case 'u': e2c.default_uid = atoi(optarg); break;
 			case 'g': e2c.default_gid = atoi(optarg); break;
@@ -153,6 +166,7 @@ int main(int argc, char *argv[] )
 			case 'P': e2c.pw_file = optarg; break;
 			case 'G': e2c.grp_file = optarg; break;
 			case 'S': e2c.unaccessible = 0; break;
+			case 'e': add_exclude(optarg); break;
 		}
 			 
 	} while (c >= 0);
@@ -198,7 +212,7 @@ int main(int argc, char *argv[] )
 	/* reserve memory for the file-copy */
 	e2c.cp_buf = malloc(BUF_SIZE);
 	if (!e2c.cp_buf) {
-		printf("Malloc failed\n");
+		fputs("Malloc failed\n", stderr);
 		return -1;
 	}
 	

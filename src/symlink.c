@@ -97,7 +97,7 @@ int e2symlink(e2i_ctx_t *e2c)
 	    strcpy(buf, tmpptr);
 	}
 
-	if (e2c->verbose)
+	if (verbose)
 		printf("Copying symlink %s -> %s\n",e2c->curr_path,buf);
 	
 	s.st_size = strlen(buf);	
@@ -130,7 +130,7 @@ int e2symlink(e2i_ctx_t *e2c)
 	    strcpy(buf, tmpptr);
 	}
 
-	if (e2c->verbose)
+	if (verbose)
 		printf("Copying symlink %zu %ld %s -> %s\n", strlen(buf), size, e2c->curr_path, buf);
 	
 	

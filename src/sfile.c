@@ -111,7 +111,7 @@ int e2mknod(e2i_ctx_t *e2c)
 		fprintf(stderr, "File '%s' is not a block or charspecial device\n", e2c->curr_path);
 		return -1;
 	}
-	if (e2c->verbose)
+	if (verbose)
 		printf("Copying special file: %s\n", e2c->curr_path);
 
 	return special_inode(e2c, basename(e2c->curr_path), &s);
@@ -188,7 +188,7 @@ int read_special_file(e2i_ctx_t *e2c)
 				return -1;
 		}
 		
-		if (e2c->verbose)
+		if (verbose)
 			printf("Creating special file: %s (%c, Major %d, Minor: %d)\n",
 					fname, type, major, minor);
 

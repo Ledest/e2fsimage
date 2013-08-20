@@ -45,15 +45,39 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fnmatch.h>
+
+static char cpath[256] = "";
 
 int filter(const struct dirent *d)
 {
 	const char *n = d->d_name;
 
 	/* skip . and .. */
-	return !(n[0] == '.' &&
-		 (n[1] == '\0' ||
-		  (n[1] == '.' && n[2] == '\0')));
+	if (n[0] == '.' &&
+	    (n[1] == '\0' ||
+	     (n[1] == '.' && n[2] == '\0')))
+		return 0;
+	/* skip excluded */
+	else {
+		int i;
+		int ret = 1;
+		size_t l = strlen(cpath);
+
+		if (cpath[0]) {
+			cpath[l] = '/';
+			strcpy(cpath + l + 1, n);
+		} else
+			strcpy(cpath, n);
+		for (i = 0; i < excluded_num; i++)
+			if (!fnmatch(excluded[i], cpath, 0)) {
+				if (verbose)
+					printf("Excluded %s\n", cpath);
+				ret = 0;
+			}
+		cpath[l] = '\0';
+		return ret;
+	}
 }
 
 /*
@@ -70,6 +94,8 @@ int e2cpdir(e2i_ctx_t *e2c_old, ext2_ino_t newdir)
 	
 	memcpy(&e2c, e2c_old, sizeof(e2i_ctx_t));
 	e2c.curr_e2dir = newdir;
+
+	strcpy(cpath, e2c.curr_path + strlen(e2c.root_path) + !!strcmp(e2c.curr_path, e2c.root_path));
 
 	ret = scandir(e2c.curr_path, &namelist, filter, NULL);
 	if (ret < 0) {
@@ -154,7 +180,7 @@ static int e2check_hardlink(e2i_ctx_t *e2c, ino_t ino)
 	E2_ERR(ret, "Ext2 write Inode Error", "");
 
 	/* be verbose and do statistics */
-	if (e2c->verbose)
+	if (verbose)
 		printf("Creating hard link %s\n", e2c->curr_path);
 	
 	e2c->cnt->hardln++;

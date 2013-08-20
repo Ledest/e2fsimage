@@ -77,7 +77,7 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	E2_ERR(ret, "Could not create dir: ", dname);
 
 	/* say what we do and increase the counter */
-	if (e2c->verbose)
+	if (verbose)
 		printf ("Creating directory %s\n", dname);
 
 	e2c->cnt->dir++;
