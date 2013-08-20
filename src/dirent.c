@@ -200,8 +200,8 @@ int e2filetype_select(e2i_ctx_t *e2c)
 
 	lstat(e2c->curr_path, &s);
 
-	if ((S_ISREG(s.st_mode) && access(e2c->curr_path, R_OK)) ||
-	    (S_ISDIR(s.st_mode) && access(e2c->curr_path, R_OK|X_OK))) {
+	if ((S_ISREG(s.st_mode) || S_ISDIR(s.st_mode)) &&
+	    access(e2c->curr_path, S_ISDIR(s.st_mode) ? R_OK|X_OK : R_OK)) {
 		fprintf(stderr, "access: %s: '%s'\n", strerror(errno), e2c->curr_path);
 		return e2c->unaccessible;
 	}
