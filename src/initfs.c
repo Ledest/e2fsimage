@@ -165,10 +165,11 @@ static int create_root_dir(ext2_filsys fs)
 }
 
 
-int init_fs(ext2_filsys *fs, char *fsname, int size)
+int init_fs(ext2_filsys *fs, char *fsname, __u32 size)
 {
 	struct ext2_super_block super;
-	int ret, i;
+	int ret;
+	__u32 i;
 	struct stat s;
 	char *buf;
 	FILE *fp;
