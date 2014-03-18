@@ -94,7 +94,7 @@ options respectively
 
 .TP
 .BI \-e\  pattern
-exclude files based upon pattern
+Exclude files based upon pattern
 
 .TP
 .BI \-D\  devicefile
