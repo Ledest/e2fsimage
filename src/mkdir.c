@@ -90,7 +90,9 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	E2_ERR(ret, "Ext2 read Inode Error", "");
 
 	inode.i_uid = s.st_uid;
+	ext2fs_set_i_uid_high(inode,s.st_uid);
 	inode.i_gid = s.st_gid;
+	ext2fs_set_i_gid_high(inode,s.st_gid);
 	inode.i_mode = s.st_mode;
 	ret = ext2fs_write_inode(e2c->fs, nd, &inode);
 	E2_ERR(ret, "Ext2 write Inode Error", "");
