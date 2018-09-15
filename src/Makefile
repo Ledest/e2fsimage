@@ -10,7 +10,7 @@ all: e2fsimage
 
 OBJS=main.o copy.o symlink.o util.o mkdir.o \
     dirent.o mke2fs.o inodb.o sfile.o uiddb.o uids.o \
-	malloc.o passwd.o group.o
+	malloc.o passwd.o group.o xattr.o
 
 unused_OBJ=initfs.o
 

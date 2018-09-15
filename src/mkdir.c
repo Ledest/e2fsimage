@@ -97,6 +97,9 @@ int e2mkdir(e2i_ctx_t *e2c, ext2_ino_t *newdir) {
 	ret = ext2fs_write_inode(e2c->fs, nd, &inode);
 	E2_ERR(ret, "Ext2 write Inode Error", "");
 
+	/* copy the extended attributes */
+	ret = copy_xattrs(e2c, nd);
+	if (ret) return -1;
 
 	modinode(e2c, dname, nd);
 	

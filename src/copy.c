@@ -58,6 +58,9 @@ int e2cp(e2i_ctx_t *e2c)
 	off_t size = 0;
 	struct stat s;
 	FILE *fp;
+
+	if (verbose)
+		printf("Copying file %s\n", e2c->curr_path);
 	
 	/* 'stat' the file we want to copy */
 	ret = lstat(e2c->curr_path, &s);
@@ -78,6 +81,10 @@ int e2cp(e2i_ctx_t *e2c)
 
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "Ext2 Inode Error", "");
+
+	/* copy the extended attributes */
+	ret = copy_xattrs(e2c, e2ino);
+	if (ret) return -1;
 
 	/* open the targetfile */
 	ret = ext2fs_file_open(e2c->fs, e2ino, EXT2_FILE_WRITE, &e2file);
@@ -117,9 +124,6 @@ int e2cp(e2i_ctx_t *e2c)
 		fprintf(stderr, "Error 'size matters' for %s Inode:%ld, File:%ld\n",e2c->curr_path, s.st_size, size);
 		return -1;
 	}
-	
-	if (verbose)
-		printf("Copying file %s\n", e2c->curr_path);
 	
 	e2c->cnt->regf++;
 	

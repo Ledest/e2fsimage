@@ -168,6 +168,9 @@ int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino);
 int read_passwd(e2i_ctx_t *e2c);
 int read_group(e2i_ctx_t *e2c);
 
+/* xattr functions */
+int copy_xattrs(e2i_ctx_t *e2c, ext2_ino_t e2ino);
+
 extern int verbose;
 extern char const *excluded[];
 extern unsigned short excluded_num;
