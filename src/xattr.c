@@ -59,12 +59,12 @@ static int copy_xattr(const char *path, const char *attr, struct ext2_xattr_hand
     if (verbose)
         printf("  setting xattr %s\n", attr);
 
-    ssize_t value_ret = getxattr(path, attr, NULL, 0);
+    ssize_t value_ret = lgetxattr(path, attr, NULL, 0);
     if (value_ret == 0) return 0;
     XATTR_ERR(value_ret);
 
     char *value = malloc((size_t) value_ret);
-    ret = getxattr(path, attr, value, (size_t) value_ret);
+    ret = lgetxattr(path, attr, value, (size_t) value_ret);
     XATTR_ERR(ret);
 
     ret = ext2fs_xattr_set(xattr_handle, attr, value, (size_t) value_ret);

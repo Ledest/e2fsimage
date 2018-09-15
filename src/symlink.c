@@ -106,6 +106,10 @@ int e2symlink(e2i_ctx_t *e2c)
 
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
 	E2_ERR(ret, "could not write inode", "");
+
+	/* copy the extended attributes */
+	ret = copy_xattrs(e2c, e2ino);
+	if (ret) return -1;
 	
 	/* open the targetfile */
 	ret = ext2fs_file_open(e2c->fs, e2ino, EXT2_FILE_WRITE, &e2file);
