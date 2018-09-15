@@ -131,7 +131,7 @@ typedef struct {
 	int unaccessible;
 } e2i_ctx_t;
 
-int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, int size);
+int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, long size);
 int init_fs(ext2_filsys *fs, char *fsname, __u32 size);
 
 int e2cp(e2i_ctx_t *e2c);

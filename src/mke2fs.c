@@ -47,7 +47,7 @@
 #include <wait.h>
 #include <string.h>
 
-int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, int size)
+int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, long size)
 {
 	int pid, status, fd;
 	char buf[4096];
