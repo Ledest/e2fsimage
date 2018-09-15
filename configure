@@ -75,7 +75,7 @@ search_includes() {
 search_lib() {
   for dbn in $@; do
     for dir in ${DIRS};  do
-      for libdir in /lib64 /lib "";  do
+      for libdir in /lib64 /lib /lib/$(gcc -dumpmachine) "";  do
         for suffix in so dylib obj a; do
           if test -r ${dir}${libdir}/lib${dbn}.${suffix}; then
             add_lib ${dir}${libdir} ${dbn};
