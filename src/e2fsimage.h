@@ -64,6 +64,8 @@
 
 #define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x) || S_ISSOCK(x))
 
+#define lo(x) (uint16_t)(x & 0xFFFF)
+#define hi(x) (uint16_t)((x >> 16) & 0xFFFF)
 
 #define MALLOC_DEBUG_
 
@@ -131,8 +133,7 @@ typedef struct {
 	int unaccessible;
 } e2i_ctx_t;
 
-int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, int size);
-int init_fs(ext2_filsys *fs, char *fsname, __u32 size);
+int mke2fs(const char *fname, const char *fstype, const char *label, int bsize, long size);
 
 int e2cp(e2i_ctx_t *e2c);
 int e2symlink(e2i_ctx_t *e2c);
@@ -167,6 +168,9 @@ int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino);
 
 int read_passwd(e2i_ctx_t *e2c);
 int read_group(e2i_ctx_t *e2c);
+
+/* xattr functions */
+int copy_xattrs(e2i_ctx_t *e2c, ext2_ino_t e2ino);
 
 extern int verbose;
 extern char const *excluded[];

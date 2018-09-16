@@ -1,0 +1,4 @@
+*.o
+/src/e2fsimage
+/man/e2fsimage.1
+/Local.mak

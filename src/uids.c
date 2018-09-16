@@ -130,20 +130,20 @@ int modinode(e2i_ctx_t *e2c, const char *fname, ext2_ino_t e2ino)
 
 	/* do the root squash */
 	if (! e2c->preserve_uidgid) {
-		inode.i_uid = e2c->default_uid;
-		ext2fs_set_i_uid_high(inode, e2c->default_uid);
-		inode.i_gid = e2c->default_gid;
-		ext2fs_set_i_gid_high(inode, e2c->default_gid);
+		inode.i_uid = lo(e2c->default_uid);
+		ext2fs_set_i_uid_high(inode, hi(e2c->default_uid));
+		inode.i_gid = lo(e2c->default_gid);
+		ext2fs_set_i_gid_high(inode, hi(e2c->default_gid));
 	}
 
 	/* if the filename is mentioned in .UIDGID we must change the owner */
 	if (uiddb_search(e2c->uid_db, fname, &uid, &gid)){
 		if (verbose)
 			printf("Changing UID and GID for %s (%d:%d)\n", fname, uid, gid);
-		inode.i_uid = uid;
-		ext2fs_set_i_uid_high(inode, uid);
-		inode.i_gid = gid;
-		ext2fs_set_i_gid_high(inode, gid);
+		inode.i_uid = lo(uid);
+		ext2fs_set_i_uid_high(inode, hi(uid));
+		inode.i_gid = lo(gid);
+		ext2fs_set_i_gid_high(inode, hi(gid));
 	}		
 		
 	ret = ext2fs_write_inode(e2c->fs, e2ino, &inode);
