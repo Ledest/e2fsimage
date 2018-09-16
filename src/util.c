@@ -70,10 +70,10 @@ void init_inode(e2i_ctx_t *e2c, struct ext2_inode *i, struct stat *s)
 	i->i_links_count = 1;
 	i->i_mode = s->st_mode;
 	i->i_size = s->st_size;
-	i->i_uid = s->st_uid;
-	ext2fs_set_i_uid_high(*i,s->st_uid);
-	i->i_gid = s->st_gid;
-	ext2fs_set_i_gid_high(*i,s->st_gid);
+	i->i_uid = lo(s->st_uid);
+	ext2fs_set_i_uid_high(*i, hi(s->st_uid) );
+	i->i_gid = lo(s->st_gid);
+	ext2fs_set_i_gid_high(*i, hi(s->st_gid));
 	i->i_atime = s->st_atime;
 	i->i_ctime = s->st_ctime;
 	i->i_mtime = s->st_mtime;

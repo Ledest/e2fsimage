@@ -64,6 +64,8 @@
 
 #define S_ISSF(x) (S_ISCHR(x) || S_ISBLK(x) || S_ISFIFO(x) || S_ISSOCK(x))
 
+#define lo(x) (uint16_t)(x & 0xFFFF)
+#define hi(x) (uint16_t)((x >> 16) & 0xFFFF)
 
 #define MALLOC_DEBUG_
 
