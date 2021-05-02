@@ -17,5 +17,5 @@ clean:
 	rm -f $(MANPAGES)
 
 install:
-	install -d -m 0755 $(DESTDIR)$(mandir)/man1
-	install -p -m 0644 $(MANPAGES) $(DESTDIR)$(mandir)/man1/
+	install -d -m 0755 $(DESTDIR)$(prefix)/$(mandir)/man1
+	install -p -m 0644 $(MANPAGES) $(DESTDIR)$(prefix)/$(mandir)/man1/
